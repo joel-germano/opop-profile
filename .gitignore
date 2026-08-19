@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# scratch folder for source assets already copied into public/ and src/app/fonts/
+/_tmp/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

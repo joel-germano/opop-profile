@@ -1,0 +1,23 @@
+# O `name:` explícito é obrigatório aqui: sem ele o Compose usa o nome da pasta
+# ("stack"), que é o mesmo de outros projetos deste servidor — foi assim que um
+# `docker compose down` derrubou teia-site e teia-backend em 18/08/2026.
+# Ver _docs/deploy.md, seção "Isolamento do projeto Compose".
+name: eu-apoio
+
+services:
+  teia-eu-apoio:
+    container_name: teia-eu-apoio
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_SITE_URL: https://eu-apoio.dirceutencaten.com.br
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8102:3000"
+    networks:
+      - teia-network
+
+networks:
+  teia-network:
+    external: true

@@ -1,69 +1,132 @@
+"use client";
+
+import { useRef, useState } from "react";
 import Image from "next/image";
+import { Camera, Menu } from "lucide-react";
+import { TemplateCarousel3D } from "@/components/TemplateCarousel3D";
+import { PhotoEditorModal } from "@/components/PhotoEditorModal";
+import { DirceuMenuModal } from "@/components/DirceuMenuModal";
+import { templates } from "@/lib/templates";
 
 export default function Home() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setPhotoUrl(url);
+    e.target.value = "";
+  };
+
+  const handleCloseEditor = () => {
+    if (photoUrl) URL.revokeObjectURL(photoUrl);
+    setPhotoUrl(null);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="flex flex-1 min-h-screen overflow-x-hidden bg-[#2A2A2A]">
+      <div className="hidden md:block flex-1 bg-[#2A2A2A]" />
+
+      <main
+        className="flex w-full flex-col items-center gap-8 overflow-x-hidden py-10 md:w-120 md:flex-none border-x border-white/10 bg-[#2A2A2A]"
+        style={{
+          paddingTop: "max(2.5rem, env(safe-area-inset-top))",
+          paddingBottom: "max(2.5rem, env(safe-area-inset-bottom))",
+          paddingLeft: "env(safe-area-inset-left)",
+          paddingRight: "env(safe-area-inset-right)",
+        }}
+      >
+        <div className="w-full px-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 rounded-full bg-white/10 py-1.5 pl-1.5 pr-4">
+              <Image
+                src="/perfil-dirceu.png"
+                alt="Dirceu ten Caten"
+                width={40}
+                height={40}
+                className="rounded-full"
+              />
+              <span className="text-lg font-bold text-white">
+                Dirceu ten Caten
+              </span>
+            </div>
+
+            <button
+              type="button"
+              aria-label="Menu"
+              onClick={() => setIsMenuOpen(true)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition active:scale-90 hover:bg-white/20"
+            >
+              <Menu size={20} strokeWidth={1.75} />
+            </button>
+          </div>
+
+          <div className="mt-10 text-center">
+            <h1 className="font-heading text-3xl font-normal tracking-wide text-white">
+              Um vice pra chamar Dirceu
+            </h1>
+
+            <p className="mt-4 text-lg leading-snug text-white/60">
+              Mostre que você tem um vice pra chamar Dirceu. Adicione a
+              moldura à sua foto e compartilhe esse apoio nas redes.
+            </p>
+          </div>
+        </div>
+
+        <TemplateCarousel3D
+          templates={templates}
+          activeIndex={activeIndex}
+          onSelect={setActiveIndex}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
+
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="flex h-14 w-full max-w-xs items-center justify-center gap-2 rounded-full bg-brand text-base font-semibold text-black transition active:scale-95 hover:bg-brand-light"
+        >
+          <Camera size={20} strokeWidth={1.75} />
+          Escolha sua foto
+        </button>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+
+        <p className="mt-auto pt-8 text-sm text-white/40">
+          Desenvolvido por{" "}
           <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+            href="https://wa.me/5547996848876"
             target="_blank"
             rel="noopener noreferrer"
+            className="font-medium text-white/70 underline decoration-white/30 underline-offset-2 transition hover:text-white"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
+            Joel Germano
           </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+        </p>
       </main>
+
+      <div className="hidden md:block flex-1 bg-[#2A2A2A]" />
+
+      {photoUrl && (
+        <PhotoEditorModal
+          templates={templates}
+          initialIndex={activeIndex}
+          key={photoUrl}
+          photoUrl={photoUrl}
+          onClose={handleCloseEditor}
+          onRequestNewPhoto={() => fileInputRef.current?.click()}
+        />
+      )}
+
+      {isMenuOpen && <DirceuMenuModal onClose={() => setIsMenuOpen(false)} />}
     </div>
   );
 }
