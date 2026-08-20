@@ -1,0 +1,103 @@
+"use server";
+
+import { connectDB } from "@/lib/db";
+import { PaymentModel } from "@/lib/models/payment";
+import { UserModel } from "@/lib/models/user";
+import { getCurrentUser } from "@/lib/auth";
+import { createPixCharge, chargeCreditCard } from "@/lib/efi";
+import { PREMIUM_PRICE_CENTS } from "@/lib/plans";
+
+export type PixChargeResult =
+  | { ok: true; txid: string; pixCopiaECola: string; qrCodeImage: string }
+  | { ok: false; error: string };
+
+export async function createPixChargeAction(): Promise<PixChargeResult> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: "Sessão expirada, faça login novamente." };
+
+  try {
+    await connectDB();
+    const charge = await createPixCharge({
+      amountCents: PREMIUM_PRICE_CENTS,
+      description: "Eu Apoio Premium",
+    });
+
+    await PaymentModel.create({
+      userId: user._id,
+      method: "pix",
+      amountCents: PREMIUM_PRICE_CENTS,
+      status: "pending",
+      externalId: charge.txid,
+      pixCopiaECola: charge.pixCopiaECola,
+    });
+
+    return {
+      ok: true,
+      txid: charge.txid,
+      pixCopiaECola: charge.pixCopiaECola,
+      qrCodeImage: charge.qrCodeImage,
+    };
+  } catch (err) {
+    console.error("[createPixChargeAction]", err);
+    return { ok: false, error: "Não foi possível gerar o Pix agora. Tente novamente." };
+  }
+}
+
+export type CreditCardState = { error: string } | { success: true } | null;
+
+export async function chargeCreditCardAction(
+  _prevState: CreditCardState,
+  formData: FormData
+): Promise<CreditCardState> {
+  const user = await getCurrentUser();
+  if (!user) return { error: "Sessão expirada, faça login novamente." };
+
+  const paymentToken = String(formData.get("paymentToken") ?? "");
+  const cardName = String(formData.get("cardName") ?? "").trim();
+  const cpf = String(formData.get("cpf") ?? "").trim();
+
+  if (!paymentToken) {
+    return { error: "Não foi possível validar o cartão. Tente novamente." };
+  }
+  if (!cardName || !cpf) {
+    return { error: "Preencha o nome impresso no cartão e o CPF do titular." };
+  }
+
+  try {
+    await connectDB();
+    const charge = await chargeCreditCard({
+      amountCents: PREMIUM_PRICE_CENTS,
+      description: "Eu Apoio Premium",
+      paymentToken,
+      customer: {
+        name: cardName,
+        cpf,
+        email: user.email,
+        phoneNumber: user.whatsapp,
+      },
+    });
+
+    await PaymentModel.create({
+      userId: user._id,
+      method: "credit",
+      amountCents: PREMIUM_PRICE_CENTS,
+      status: charge.status === "approved" ? "paid" : "failed",
+      externalId: charge.chargeId,
+      paidAt: charge.status === "approved" ? new Date() : undefined,
+    });
+
+    if (charge.status !== "approved") {
+      return { error: "Cartão não aprovado. Verifique os dados ou tente outro cartão." };
+    }
+
+    await UserModel.findByIdAndUpdate(user._id, {
+      plan: "premium",
+      premiumSince: new Date(),
+    });
+
+    return { success: true };
+  } catch (err) {
+    console.error("[chargeCreditCardAction]", err);
+    return { error: "Não foi possível processar o pagamento agora. Tente novamente." };
+  }
+}

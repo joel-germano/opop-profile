@@ -12,12 +12,22 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_SITE_URL: https://eu-apoio.dirceutencaten.com.br
+    env_file:
+      - ../.env
     restart: unless-stopped
     ports:
       - "127.0.0.1:8102:3000"
+    volumes:
+      # Fotos de perfil enviadas no cadastro (public/uploads/avatars). Volume
+      # nomeado para sobreviver ao rebuild da imagem a cada deploy — sem isso
+      # as fotos salvas em disco seriam perdidas no próximo `docker compose build`.
+      - uploads:/app/public/uploads
     networks:
       - teia-network
 
 networks:
   teia-network:
     external: true
+
+volumes:
+  uploads:

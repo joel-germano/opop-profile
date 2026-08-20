@@ -40,6 +40,19 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
+# Certificado .p12 da Efí (pagamentos) — não é versionado no git, mas viaja
+# junto no pacote do deploy.ps1 (mesmo tratamento do .env). Sem volume: é
+# estático, então basta rebuildar a imagem se o certificado for renovado.
+COPY --from=builder --chown=nextjs:nodejs /app/certs ./certs
+
+# Pastas onde fotos de perfil (save-avatar.ts), molduras (save-template.ts) e
+# fotos da galeria (save-gallery-photo.ts) são salvas em disco. Precisam
+# existir e já pertencer a `nextjs` antes do volume ser montado em cima: um
+# volume nomeado novo herda dono/permissões do que já estava no caminho da
+# imagem.
+RUN mkdir -p ./public/uploads/avatars ./public/uploads/templates ./public/uploads/gallery \
+  && chown -R nextjs:nodejs ./public/uploads
+
 USER nextjs
 EXPOSE 3000
 

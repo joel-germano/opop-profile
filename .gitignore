@@ -39,6 +39,12 @@ yarn-error.log*
 # scratch folder for source assets already copied into public/ and src/app/fonts/
 /_tmp/
 
+# fotos de perfil enviadas no cadastro (persistem via volume Docker, não no repo)
+/public/uploads/
+
+# certificado .p12 da Efí (pagamentos) — segredo, nunca versionar
+/certs/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

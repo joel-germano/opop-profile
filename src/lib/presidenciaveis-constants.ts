@@ -1,0 +1,2 @@
+export const PRESIDENCIAVEIS_PRICE_CENTS = 300; // R$ 3,00
+export const GALLERY_PAGE_SIZE = 12;
