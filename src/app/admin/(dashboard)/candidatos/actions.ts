@@ -56,7 +56,7 @@ export async function updateUserAction(
 
   await UserModel.findByIdAndUpdate(userId, update);
 
-  revalidatePath("/admin/usuarios");
+  revalidatePath("/admin/candidatos");
   return { success: true };
 }
 
@@ -75,6 +75,6 @@ export async function deleteUserAction(userId: string) {
   await deleteAvatar(user.photoUrl);
   await UserModel.findByIdAndDelete(userId);
 
-  revalidatePath("/admin/usuarios");
-  redirect("/admin/usuarios");
+  revalidatePath("/admin/candidatos");
+  redirect("/admin/candidatos");
 }

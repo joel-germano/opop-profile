@@ -6,7 +6,7 @@ import { UserModel } from "@/lib/models/user";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
 import { deleteUserAction } from "./actions";
 
-export default async function AdminUsuariosPage() {
+export default async function AdminCandidatosPage() {
   await connectDB();
   const users = await UserModel.find({})
     .select("name username email whatsapp photoUrl plan createdAt")
@@ -17,7 +17,7 @@ export default async function AdminUsuariosPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="font-heading text-2xl font-normal tracking-wide text-white">
-          Usuários
+          Candidatos
         </h1>
         <p className="mt-1 text-sm text-white/60">{users.length} conta(s).</p>
       </div>
@@ -53,8 +53,8 @@ export default async function AdminUsuariosPage() {
 
             <div className="flex shrink-0 gap-2">
               <Link
-                href={`/admin/usuarios/${user._id}`}
-                aria-label="Editar usuário"
+                href={`/admin/candidatos/${user._id}`}
+                aria-label="Editar candidato"
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition active:scale-90 hover:bg-white/20"
               >
                 <Pencil size={15} strokeWidth={1.75} />
@@ -62,7 +62,7 @@ export default async function AdminUsuariosPage() {
               <form action={deleteUserAction.bind(null, String(user._id))}>
                 <ConfirmSubmitButton
                   confirmMessage={`Excluir ${user.name}? Isso também apaga as molduras e a foto de perfil dele(a).`}
-                  ariaLabel="Excluir usuário"
+                  ariaLabel="Excluir candidato"
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-red-500/15 text-red-400 transition active:scale-90 hover:bg-red-500/25"
                 >
                   <Trash2 size={15} strokeWidth={1.75} />
@@ -73,7 +73,7 @@ export default async function AdminUsuariosPage() {
         ))}
 
         {users.length === 0 && (
-          <p className="text-sm text-white/50">Nenhum usuário cadastrado ainda.</p>
+          <p className="text-sm text-white/50">Nenhum candidato cadastrado ainda.</p>
         )}
       </div>
     </div>

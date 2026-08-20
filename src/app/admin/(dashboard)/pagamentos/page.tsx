@@ -48,6 +48,10 @@ export default async function AdminPagamentosPage() {
                   {formatBRL(payment.amountCents)} ·{" "}
                   {new Date(payment.createdAt as Date).toLocaleString("pt-BR")}
                 </p>
+                <p className="truncate text-xs text-white/40">
+                  id transação: <span className="font-mono">{String(payment._id)}</span> · txid:{" "}
+                  <span className="font-mono">{payment.externalId}</span>
+                </p>
               </div>
 
               <AdminPaymentRow

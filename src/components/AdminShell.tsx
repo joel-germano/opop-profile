@@ -2,12 +2,21 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BadgeDollarSign, Image as ImageIcon, LogOut, Receipt, Users, Vote } from "lucide-react";
+import {
+  BadgeDollarSign,
+  Image as ImageIcon,
+  LogOut,
+  Receipt,
+  UserCheck,
+  Users,
+  Vote,
+} from "lucide-react";
 import { logoutAdminAction } from "@/app/admin/actions";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Vendas", icon: BadgeDollarSign },
-  { href: "/admin/usuarios", label: "Usuários", icon: Users },
+  { href: "/admin/candidatos", label: "Candidatos", icon: Users },
+  { href: "/admin/eleitores", label: "Eleitores", icon: UserCheck },
   { href: "/admin/molduras", label: "Molduras", icon: ImageIcon },
   { href: "/admin/pagamentos", label: "Pagamentos", icon: Receipt },
   { href: "/admin/presidenciaveis", label: "Presidenciáveis", icon: Vote },
