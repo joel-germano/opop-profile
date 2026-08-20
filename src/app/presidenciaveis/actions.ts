@@ -173,15 +173,41 @@ export async function postToGalleryAction(
   const imageDataUrl = String(formData.get("imageDataUrl") ?? "");
   if (!imageDataUrl) return { error: "Nenhuma imagem pra postar." };
 
+  await connectDB();
+
+  // Reforçado aqui e também pelo índice único no schema (candidateSlug +
+  // supporterId) — um apoiador só pode ter uma foto por candidato na galeria.
+  const existing = await GalleryPostModel.findOne({
+    candidateSlug,
+    supporterId: supporter._id,
+  }).select("_id");
+  if (existing) {
+    return { error: "Você já postou uma foto na galeria desse candidato." };
+  }
+
   try {
-    await connectDB();
     const imageUrl = await saveGalleryPhotoFromDataUrl(imageDataUrl);
-    await GalleryPostModel.create({ candidateSlug, imageUrl });
+    await GalleryPostModel.create({ candidateSlug, supporterId: supporter._id, imageUrl });
     return { success: true };
   } catch (err) {
+    if (err instanceof Error && "code" in err && err.code === 11000) {
+      return { error: "Você já postou uma foto na galeria desse candidato." };
+    }
     console.error("[postToGalleryAction]", err);
     return { error: "Não foi possível postar na galeria. Tente novamente." };
   }
+}
+
+export async function hasPostedToGalleryAction(candidateSlug: string): Promise<boolean> {
+  const supporter = await getCurrentSupporter();
+  if (!supporter) return false;
+
+  await connectDB();
+  const existing = await GalleryPostModel.findOne({
+    candidateSlug,
+    supporterId: supporter._id,
+  }).select("_id");
+  return Boolean(existing);
 }
 
 export async function getGalleryPreviewAction(

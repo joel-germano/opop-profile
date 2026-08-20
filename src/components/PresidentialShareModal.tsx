@@ -15,7 +15,11 @@ import {
 } from "lucide-react";
 import { downloadImage, shareImage } from "@/lib/composite";
 import { SITE_URL } from "@/lib/site";
-import { postToGalleryAction, getGalleryPreviewAction } from "@/app/presidenciaveis/actions";
+import {
+  postToGalleryAction,
+  getGalleryPreviewAction,
+  hasPostedToGalleryAction,
+} from "@/app/presidenciaveis/actions";
 
 function blobToDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -70,6 +74,9 @@ ${SITE_URL}/presidenciaveis/${candidateSlug}`;
 
   useEffect(() => {
     getGalleryPreviewAction(candidateSlug).then(setPreviewPhotos);
+    hasPostedToGalleryAction(candidateSlug).then((posted) => {
+      if (posted) setGalleryStatus("posted");
+    });
   }, [candidateSlug]);
 
   const handlePostToGallery = async () => {

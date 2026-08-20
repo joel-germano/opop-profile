@@ -19,7 +19,10 @@ const userSchema = new Schema(
     },
     whatsapp: { type: String, required: true, trim: true },
     photoUrl: { type: String, required: true },
-    passwordHash: { type: String, required: true },
+    // Opcional: contas criadas via Google podem não ter senha — login só
+    // pelo Google até o usuário decidir cadastrar uma (não implementado).
+    passwordHash: { type: String },
+    googleId: { type: String },
     plan: { type: String, enum: ["free", "premium"], default: "free" },
     premiumSince: { type: Date },
   },

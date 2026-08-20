@@ -6,10 +6,17 @@ import { Schema, model, models, type InferSchemaType } from "mongoose";
 const galleryPostSchema = new Schema(
   {
     candidateSlug: { type: String, required: true, index: true },
+    supporterId: { type: Schema.Types.ObjectId, ref: "Supporter" },
     imageUrl: { type: String, required: true },
   },
   { timestamps: true }
 );
+
+// Um apoiador só pode ter uma foto na galeria de um mesmo candidato — reforçado
+// em postToGalleryAction (findOne antes do create). Sem índice único aqui: já
+// existem posts reais de antes desse campo existir, sem supporterId, e vários
+// deles colidem num índice único (mesmo com sparse) por terem o campo ausente
+// no mesmo candidato.
 
 export type GalleryPost = InferSchemaType<typeof galleryPostSchema> & { _id: string };
 
