@@ -23,10 +23,9 @@ export async function registerAction(
     .trim()
     .toLowerCase();
   const senha = String(formData.get("senha") ?? "");
-  const confirmarSenha = String(formData.get("confirmarSenha") ?? "");
   const photoDataUrl = String(formData.get("photoDataUrl") ?? "");
 
-  if (!name || !username || !whatsapp || !email || !senha) {
+  if (!name || !username || !email || !senha) {
     return { error: "Preencha todos os campos." };
   }
   if (!photoDataUrl) {
@@ -35,12 +34,9 @@ export async function registerAction(
   if (senha.length < 6) {
     return { error: "A senha precisa ter pelo menos 6 caracteres." };
   }
-  if (senha !== confirmarSenha) {
-    return { error: "As senhas não conferem." };
-  }
-  if (!/^[a-z0-9_.]+$/.test(username)) {
+  if (!/^[a-z0-9_.-]+$/.test(username)) {
     return {
-      error: "Username só pode ter letras minúsculas, números, ponto e _.",
+      error: "Username só pode ter letras minúsculas, números, ponto, _ e -.",
     };
   }
 

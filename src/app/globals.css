@@ -8,10 +8,30 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-bahnschrift);
+  --font-sans: var(--font-manrope);
   --font-heading: var(--font-made-florence);
+  --font-display: var(--font-gasoek);
   --color-brand: #47c1f1;
   --color-brand-light: #7dd3f8;
+
+  /* Opop Profile — paleta de marca (ver _tmp/cores.png).
+     primary/secondary = interações (botões, links, foco);
+     success/danger = estados de feedback;
+     decor-* = uso decorativo (fundos, blobs, chips, ilustrações). */
+  --color-primary: #3c46bb;
+  --color-primary-light: #6670d9;
+  --color-primary-dark: #2a3291;
+  --color-secondary: #8f37f4;
+  --color-secondary-light: #a868f7;
+  --color-secondary-dark: #7423d1;
+  --color-success: #4caf50;
+  --color-success-light: #6fc474;
+  --color-success-dark: #3b8c3e;
+  --color-danger: #ef3e03;
+  --color-danger-light: #ff6b3d;
+  --color-danger-dark: #c13202;
+  --color-decor-coral: #fca39e;
+  --color-decor-lime: #efffaa;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -118,6 +138,33 @@ a:focus-visible,
   .animate-card-pop,
   .animate-sparkle,
   .animate-rise {
+    animation: none;
+  }
+}
+
+/* Vertical marquee columns (home hero showcase) — each column loops a
+   doubled image list, translating exactly one copy's height so the loop
+   is seamless. */
+@keyframes marquee-vertical {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+.animate-marquee-up {
+  animation: marquee-vertical 26s linear infinite;
+}
+
+.animate-marquee-down {
+  animation: marquee-vertical 26s linear infinite reverse;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee-up,
+  .animate-marquee-down {
     animation: none;
   }
 }

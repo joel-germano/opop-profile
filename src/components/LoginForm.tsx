@@ -4,22 +4,8 @@ import { useActionState, useRef, useState } from "react";
 import Link from "next/link";
 import Script from "next/script";
 import { loginAction, loginOrRegisterWithGoogleAction, type LoginState } from "@/app/(auth)/login/actions";
-
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        id: {
-          initialize: (config: {
-            client_id: string;
-            callback: (response: { credential: string }) => void;
-          }) => void;
-          renderButton: (parent: HTMLElement, options: { theme: string; width: number }) => void;
-        };
-      };
-    };
-  }
-}
+import { TextField } from "@/components/TextField";
+import { PasswordField } from "@/components/PasswordField";
 
 const initialState: LoginState = null;
 
@@ -41,16 +27,17 @@ export function LoginForm({ googleClientId }: { googleClientId: string }) {
     window.google.accounts.id.renderButton(googleButtonRef.current, {
       theme: "filled_black",
       width: 280,
+      text: "signin_with",
     });
   };
 
   return (
     <>
       <div className="mt-2 text-center">
-        <h1 className="font-heading text-3xl font-normal tracking-wide text-white">
+        <h1 className="text-2xl font-bold tracking-tight text-white">
           Entrar
         </h1>
-        <p className="mt-2 text-base text-white/60">
+        <p className="mt-1.5 text-sm text-white/60">
           Acesse o painel com seu email e senha.
         </p>
       </div>
@@ -69,26 +56,23 @@ export function LoginForm({ googleClientId }: { googleClientId: string }) {
 
       <div className="flex w-full items-center gap-3 text-xs text-white/40">
         <div className="h-px flex-1 bg-white/10" />
-        ou
+        ou entre com seu e-mail
         <div className="h-px flex-1 bg-white/10" />
       </div>
 
       <form action={formAction} className="flex w-full flex-col gap-4">
-        <input
+        <TextField
           type="email"
           name="email"
           autoComplete="email"
           placeholder="Email"
           required
-          className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/40 focus:outline-none"
         />
-        <input
-          type="password"
+        <PasswordField
           name="senha"
           autoComplete="current-password"
           placeholder="Senha"
           required
-          className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/40 focus:outline-none"
         />
 
         {state?.error && (
@@ -100,7 +84,7 @@ export function LoginForm({ googleClientId }: { googleClientId: string }) {
         <button
           type="submit"
           disabled={pending}
-          className="mt-2 flex h-14 w-full items-center justify-center rounded-full bg-brand text-base font-semibold text-black transition active:scale-95 hover:bg-brand-light disabled:opacity-60"
+          className="mt-2 flex h-14 w-full items-center justify-center rounded-full bg-danger text-base font-semibold text-white transition active:scale-95 hover:bg-danger-dark disabled:opacity-60"
         >
           {pending ? "Entrando..." : "Entrar"}
         </button>
@@ -110,7 +94,7 @@ export function LoginForm({ googleClientId }: { googleClientId: string }) {
         Ainda não tem conta?{" "}
         <Link
           href="/cadastro"
-          className="font-medium text-brand-light underline decoration-brand/40 underline-offset-2"
+          className="font-medium text-danger-light underline decoration-danger/40 underline-offset-2"
         >
           Criar conta
         </Link>

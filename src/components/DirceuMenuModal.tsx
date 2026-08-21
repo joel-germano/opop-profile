@@ -101,7 +101,7 @@ export function DirceuMenuModal({ onClose }: Props) {
               alt="Dirceu ten Caten"
               width={44}
               height={44}
-              className="rounded-full ring-2 ring-brand/60"
+              className="h-11 w-11 rounded-full ring-2 ring-brand/60"
             />
             <div>
               <p className="text-sm font-bold text-white">Dirceu ten Caten</p>

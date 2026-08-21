@@ -13,22 +13,6 @@ import {
 } from "@/app/presidenciaveis/actions";
 import { PRESIDENCIAVEIS_PRICE_CENTS } from "@/lib/presidenciaveis-constants";
 
-declare global {
-  interface Window {
-    google?: {
-      accounts: {
-        id: {
-          initialize: (config: {
-            client_id: string;
-            callback: (response: { credential: string }) => void;
-          }) => void;
-          renderButton: (parent: HTMLElement, options: { theme: string; width: number }) => void;
-        };
-      };
-    };
-  }
-}
-
 // Não redeclara `Window.EfiPay` global aqui — CheckoutForm.tsx já faz isso e
 // os dois precisariam ter exatamente o mesmo shape. Tipo local + cast em vez
 // disso, pra manter os dois arquivos independentes.
@@ -301,7 +285,7 @@ function PixPayment({ onUnlocked }: { onUnlocked: () => void }) {
           alt="QR Code Pix"
           width={220}
           height={220}
-          className="rounded-2xl bg-white p-2"
+          className="h-55 w-55 rounded-2xl bg-white p-2"
         />
         <button
           type="button"

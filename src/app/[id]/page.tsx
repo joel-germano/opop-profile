@@ -18,7 +18,7 @@ export default async function CampaignPage({
   if (!user) notFound();
 
   const templateDocs = await TemplateModel.find({ userId: user._id })
-    .sort({ createdAt: 1 })
+    .sort({ order: 1, createdAt: 1 })
     .lean();
 
   const templates = templateDocs.map((t, i) => ({

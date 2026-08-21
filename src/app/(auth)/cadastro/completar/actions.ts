@@ -1,7 +1,6 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db";
 import { UserModel } from "@/lib/models/user";
 import {
@@ -28,21 +27,17 @@ export async function completeGoogleSignupAction(
     .toLowerCase()
     .replace(/^@/, "");
   const whatsapp = String(formData.get("whatsapp") ?? "").trim();
-  const senha = String(formData.get("senha") ?? "");
   const photoDataUrl = String(formData.get("photoDataUrl") ?? "");
 
-  if (!name || !username || !whatsapp) {
+  if (!name || !username) {
     return { error: "Preencha todos os campos." };
   }
   if (!photoDataUrl) {
     return { error: "Escolha uma foto de perfil." };
   }
-  if (senha && senha.length < 6) {
-    return { error: "A senha precisa ter pelo menos 6 caracteres (ou deixe em branco)." };
-  }
-  if (!/^[a-z0-9_.]+$/.test(username)) {
+  if (!/^[a-z0-9_.-]+$/.test(username)) {
     return {
-      error: "Username só pode ter letras minúsculas, números, ponto e _.",
+      error: "Username só pode ter letras minúsculas, números, ponto, _ e -.",
     };
   }
 
@@ -63,7 +58,6 @@ export async function completeGoogleSignupAction(
   let userId: string;
   try {
     const photoUrl = await saveAvatarFromDataUrl(photoDataUrl);
-    const passwordHash = senha ? await bcrypt.hash(senha, 10) : undefined;
 
     const user = await UserModel.create({
       name,
@@ -72,7 +66,6 @@ export async function completeGoogleSignupAction(
       email: pending.email,
       googleId: pending.googleId,
       photoUrl,
-      passwordHash,
     });
     userId = String(user._id);
   } catch {

@@ -10,7 +10,7 @@ export default async function ConfiguracoesPage() {
 
   await connectDB();
   const templates = await TemplateModel.find({ userId: user._id })
-    .sort({ createdAt: 1 })
+    .sort({ order: 1, createdAt: 1 })
     .lean();
 
   const plan = user.plan as "free" | "premium";
@@ -18,13 +18,12 @@ export default async function ConfiguracoesPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-heading text-3xl font-normal tracking-wide text-white">
+        <h1 className="text-2xl font-bold tracking-tight text-white">
           Molduras
         </h1>
-        <p className="mt-2 text-base text-white/60">
-          Envie as molduras que vão aparecer na sua página de apoio (
-          <span className="text-white/80">/{user.username}</span>). PNG com um
-          &ldquo;buraco&rdquo; transparente no centro, onde a foto do apoiador aparece.
+        <p className="mt-1.5 text-sm text-white/60">
+          As artes que aparecem na sua página de apoio, em{" "}
+          <span className="text-white/80">opop.bio/{user.username}</span>.
         </p>
       </div>
 

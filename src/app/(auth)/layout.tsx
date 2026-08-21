@@ -1,5 +1,5 @@
+import Image from "next/image";
 import Link from "next/link";
-import { SITE_NAME } from "@/lib/site";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,11 +13,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           paddingBottom: "max(2.5rem, env(safe-area-inset-bottom))",
         }}
       >
-        <Link
-          href="/"
-          className="font-heading text-2xl font-normal tracking-wide text-white"
-        >
-          {SITE_NAME}
+        <Link href="/">
+          <Image
+            src="/logo-opop-v3.png"
+            alt="Opop Profile"
+            width={512}
+            height={134}
+            className="h-8 w-auto"
+          />
         </Link>
 
         {children}

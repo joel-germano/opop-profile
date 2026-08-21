@@ -147,7 +147,7 @@ function PixCheckout() {
           alt="QR Code Pix"
           width={220}
           height={220}
-          className="rounded-2xl bg-white p-2"
+          className="h-55 w-55 rounded-2xl bg-white p-2"
         />
         <p className="text-center text-sm text-white/60">
           Escaneie o QR Code ou copie o código abaixo no seu app do banco.

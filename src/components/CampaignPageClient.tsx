@@ -59,7 +59,7 @@ export function CampaignPageClient({
                 alt={user.name}
                 width={40}
                 height={40}
-                className="rounded-full object-cover"
+                className="h-10 w-10 rounded-full object-cover"
               />
               <span className="text-lg font-bold text-white">
                 {user.name}

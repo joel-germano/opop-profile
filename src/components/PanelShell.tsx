@@ -60,7 +60,7 @@ export function PanelShell({
               alt={user.name}
               width={40}
               height={40}
-              className="rounded-full object-cover"
+              className="h-10 w-10 rounded-full object-cover"
             />
             <span className="max-w-40 truncate text-base font-bold text-white">
               {user.name}
@@ -68,7 +68,7 @@ export function PanelShell({
             {user.plan === "premium" && (
               <span
                 aria-label="Conta Premium"
-                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand/20 text-brand-light"
+                className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-decor-lime/20 text-decor-lime"
               >
                 <Crown size={13} strokeWidth={2} />
               </span>
@@ -102,7 +102,7 @@ export function PanelShell({
         >
           <div className="flex shrink-0 items-center justify-between px-4 py-3 sm:py-4">
             <div className="w-10" />
-            <h2 className="font-heading text-lg font-normal tracking-wide text-white">
+            <h2 className="text-lg font-bold tracking-tight text-white">
               Menu
             </h2>
             <button
@@ -125,7 +125,7 @@ export function PanelShell({
                   onClick={() => setIsSidebarOpen(false)}
                   className={`flex items-center gap-3 rounded-2xl p-3 transition ${
                     active
-                      ? "bg-brand/15 text-brand-light"
+                      ? "bg-primary/15 text-primary-light"
                       : "bg-white/5 text-white/90 active:bg-white/10"
                   }`}
                 >

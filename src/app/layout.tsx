@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { Manrope, Gasoek_One } from "next/font/google";
 import "./globals.css";
 import { ServiceWorkerRegister } from "./sw-register";
 import { GOOGLE_FONTS_HREF } from "@/lib/fonts";
@@ -8,6 +9,19 @@ import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site";
 const bahnschrift = localFont({
   src: "./fonts/bahnschrift.ttf",
   variable: "--font-bahnschrift",
+  display: "swap",
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-manrope",
+  display: "swap",
+});
+
+const gasoekOne = Gasoek_One({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-gasoek",
   display: "swap",
 });
 
@@ -80,7 +94,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="pt-BR"
-      className={`${bahnschrift.variable} ${madeFlorenceSans.variable} h-full antialiased`}
+      className={`${bahnschrift.variable} ${madeFlorenceSans.variable} ${manrope.variable} ${gasoekOne.variable} h-full antialiased`}
     >
       <body
         className="min-h-full flex flex-col overscroll-none bg-[#2A2A2A] font-sans antialiased"

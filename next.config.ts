@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
   output: "standalone",
   images: {
     localPatterns: [{ pathname: "/**" }],
+    // i.pravatar.cc: avatares de rosto genéricos usados só como placeholder
+    // ilustrativo na home (não representam apoiadores reais).
+    remotePatterns: [{ protocol: "https", hostname: "i.pravatar.cc" }],
   },
   experimental: {
     serverActions: {

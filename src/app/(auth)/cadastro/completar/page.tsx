@@ -9,11 +9,12 @@ export default async function CompletarCadastroPage() {
   return (
     <>
       <div className="mt-2 text-center">
-        <h1 className="font-heading text-3xl font-normal tracking-wide text-white">
+        <h1 className="text-2xl font-bold tracking-tight text-white">
           Quase lá
         </h1>
-        <p className="mt-2 text-base text-white/60">
-          Confirmamos seu Google ({pending.email}). Só falta completar seu perfil.
+        <p className="mt-1.5 text-sm text-white/60">
+          Confirmamos seu Google ({pending.email}). Só falta escolher seu
+          link e completar o perfil que seus apoiadores vão ver.
         </p>
       </div>
 

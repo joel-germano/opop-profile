@@ -26,9 +26,9 @@ export async function updateProfileAction(
   if (!name || !username || !whatsapp) {
     return { error: "Preencha todos os campos." };
   }
-  if (!/^[a-z0-9_.]+$/.test(username)) {
+  if (!/^[a-z0-9_.-]+$/.test(username)) {
     return {
-      error: "Username só pode ter letras minúsculas, números, ponto e _.",
+      error: "Username só pode ter letras minúsculas, números, ponto, _ e -.",
     };
   }
 

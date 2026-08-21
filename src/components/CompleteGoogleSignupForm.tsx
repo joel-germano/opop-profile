@@ -2,12 +2,16 @@
 
 import { useActionState, useRef, useState } from "react";
 import Image from "next/image";
-import { Camera } from "lucide-react";
+import { Camera, User } from "lucide-react";
 import {
   completeGoogleSignupAction,
   type CompleteSignupState,
 } from "@/app/(auth)/cadastro/completar/actions";
 import { resizeImageToSquareDataUrl } from "@/lib/resize-avatar";
+import { slugifyUsername } from "@/lib/slug";
+import { TextField } from "@/components/TextField";
+import { PhoneInput } from "@/components/PhoneInput";
+import { UsernameField } from "@/components/UsernameField";
 
 const initialState: CompleteSignupState = null;
 
@@ -31,14 +35,22 @@ export function CompleteGoogleSignupForm({ initialName }: { initialName: string 
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-white/10 text-white/60 transition active:scale-95"
+          className="relative flex h-24 w-24 items-center justify-center rounded-full bg-white/10 text-white/60 transition active:scale-95"
           aria-label="Escolher foto de perfil"
         >
           {photoUrl ? (
-            <Image src={photoUrl} alt="Foto de perfil" fill className="object-cover" />
+            <Image
+              src={photoUrl}
+              alt="Foto de perfil"
+              fill
+              className="rounded-full object-cover"
+            />
           ) : (
-            <Camera size={26} strokeWidth={1.75} />
+            <User size={32} strokeWidth={1.75} />
           )}
+          <span className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-danger text-white ring-4 ring-[#2A2A2A]">
+            <Camera size={14} strokeWidth={2} />
+          </span>
         </button>
       </div>
       <input
@@ -49,38 +61,22 @@ export function CompleteGoogleSignupForm({ initialName }: { initialName: string 
         onChange={handlePhotoChange}
       />
 
-      <input
+      <TextField
         type="text"
         name="name"
         autoComplete="name"
-        placeholder="Nome completo"
+        placeholder="Nome completo (aparece no seu perfil)"
         defaultValue={initialName}
         required
-        className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/40 focus:outline-none"
       />
-      <input
-        type="text"
+      <UsernameField
         name="username"
         autoComplete="username"
-        placeholder="Username"
+        placeholder="seu-nome"
+        defaultValue={slugifyUsername(initialName)}
         required
-        className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/40 focus:outline-none"
       />
-      <input
-        type="tel"
-        name="whatsapp"
-        autoComplete="tel"
-        placeholder="WhatsApp"
-        required
-        className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/40 focus:outline-none"
-      />
-      <input
-        type="password"
-        name="senha"
-        autoComplete="new-password"
-        placeholder="Senha (opcional — deixe em branco pra usar só o Google)"
-        className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/40 focus:outline-none"
-      />
+      <PhoneInput name="whatsapp" placeholder="WhatsApp (opcional)" />
 
       {state?.error && (
         <p className="text-sm text-red-400" role="alert">
@@ -91,7 +87,7 @@ export function CompleteGoogleSignupForm({ initialName }: { initialName: string 
       <button
         type="submit"
         disabled={pending}
-        className="mt-2 flex h-14 w-full items-center justify-center rounded-full bg-brand text-base font-semibold text-black transition active:scale-95 hover:bg-brand-light disabled:opacity-60"
+        className="mt-2 flex h-14 w-full items-center justify-center rounded-full bg-danger text-base font-semibold text-white transition active:scale-95 hover:bg-danger-dark disabled:opacity-60"
       >
         {pending ? "Criando conta..." : "Concluir cadastro"}
       </button>
