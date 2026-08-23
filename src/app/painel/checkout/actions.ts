@@ -10,6 +10,7 @@ import {
   PIX_EXPIRATION_SECONDS,
 } from "@/lib/efi";
 import { PREMIUM_PRICE_CENTS } from "@/lib/plans";
+import { mapChargeStatus } from "@/lib/efi-charge-status";
 
 export type PixChargeResult =
   | {
@@ -101,17 +102,31 @@ export async function chargeCreditCardAction(
       },
     });
 
+    const outcome = mapChargeStatus(charge.status);
+
     await PaymentModel.create({
       userId: user._id,
       method: "credit",
       amountCents: PREMIUM_PRICE_CENTS,
-      status: charge.status === "approved" ? "paid" : "failed",
+      status: outcome,
       externalId: charge.chargeId,
-      paidAt: charge.status === "approved" ? new Date() : undefined,
+      paidAt: outcome === "paid" ? new Date() : undefined,
     });
 
-    if (charge.status !== "approved") {
+    if (outcome === "failed") {
       return { error: "Cartão não aprovado. Verifique os dados ou tente outro cartão." };
+    }
+
+    // Análise antifraude ou status que não conhecemos: não dá pra afirmar
+    // que falhou (o valor pode estar retido), então fica pendente e o
+    // usuário é avisado, em vez de ouvir "não aprovado" e tentar de novo —
+    // o que geraria uma segunda cobrança.
+    if (outcome === "pending") {
+      console.warn(`[checkout/cartão] status não conclusivo da Efí: ${charge.status}`);
+      return {
+        error:
+          "Seu pagamento está em análise pela operadora. Não tente de novo: assim que for aprovado, seu Premium é liberado automaticamente.",
+      };
     }
 
     await UserModel.findByIdAndUpdate(user._id, {

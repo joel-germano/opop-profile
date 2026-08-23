@@ -11,6 +11,7 @@ import {
   chargeCreditCardPresidenciaveis,
 } from "@/lib/efi-presidenciaveis";
 import { PRESIDENCIAVEIS_PRICE_CENTS } from "@/lib/presidenciaveis-constants";
+import { mapChargeStatus } from "@/lib/efi-charge-status";
 import { GalleryPostModel } from "@/lib/models/gallery-post";
 import { saveGalleryPhotoFromDataUrl } from "@/lib/save-gallery-photo";
 
@@ -147,17 +148,30 @@ export async function chargeSupporterCreditCardAction(
       customer: { name: cardName, cpf, email: supporter.email, phoneNumber },
     });
 
+    const outcome = mapChargeStatus(charge.status);
+
     await SupporterPurchaseModel.create({
       supporterId: supporter._id,
       method: "credit",
       amountCents: PRESIDENCIAVEIS_PRICE_CENTS,
-      status: charge.status === "approved" ? "paid" : "failed",
+      status: outcome,
       externalId: charge.chargeId,
-      paidAt: charge.status === "approved" ? new Date() : undefined,
+      paidAt: outcome === "paid" ? new Date() : undefined,
     });
 
-    if (charge.status !== "approved") {
+    if (outcome === "failed") {
       return { error: "Cartão não aprovado. Verifique os dados ou tente outro cartão." };
+    }
+
+    // Ver comentário equivalente em painel/checkout/actions.ts: status não
+    // conclusivo não pode virar "falhou", senão o cliente tenta de novo e
+    // acaba pagando duas vezes.
+    if (outcome === "pending") {
+      console.warn(`[presidenciaveis/cartão] status não conclusivo da Efí: ${charge.status}`);
+      return {
+        error:
+          "Seu pagamento está em análise pela operadora. Não tente de novo: assim que for aprovado, seu acesso é liberado automaticamente.",
+      };
     }
 
     await SupporterModel.findByIdAndUpdate(supporter._id, {
