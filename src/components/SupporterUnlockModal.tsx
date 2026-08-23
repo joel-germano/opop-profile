@@ -12,6 +12,14 @@ import {
   type IdentifyState,
 } from "@/app/presidenciaveis/actions";
 import { PRESIDENCIAVEIS_PRICE_CENTS } from "@/lib/presidenciaveis-constants";
+import {
+  formatBrPhone,
+  formatCardNumber,
+  formatCpf,
+  formatExpiry,
+  isValidCpf,
+  parseExpiry,
+} from "@/lib/card-format";
 
 // Não redeclara `Window.EfiPay` global aqui — CheckoutForm.tsx já faz isso e
 // os dois precisariam ter exatamente o mesmo shape. Tipo local + cast em vez
@@ -332,6 +340,12 @@ function CreditCardPayment({
   const [scriptReady, setScriptReady] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [error, setError] = useState("");
+  const [number, setNumber] = useState("");
+  const [holderName, setHolderName] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [cvv, setCvv] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -341,49 +355,49 @@ function CreditCardPayment({
       return;
     }
 
-    const form = e.currentTarget;
-    const number = (form.elements.namedItem("number") as HTMLInputElement).value.replace(
-      /\s/g,
-      ""
-    );
-    const holderName = (form.elements.namedItem("holderName") as HTMLInputElement).value.trim();
-    const holderDocument = (
-      form.elements.namedItem("holderDocument") as HTMLInputElement
-    ).value.replace(/\D/g, "");
-    const phoneNumber = (form.elements.namedItem("phoneNumber") as HTMLInputElement).value.trim();
-    const expirationMonth = (
-      form.elements.namedItem("expirationMonth") as HTMLInputElement
-    ).value.trim();
-    const expirationYear = (
-      form.elements.namedItem("expirationYear") as HTMLInputElement
-    ).value.trim();
-    const cvv = (form.elements.namedItem("cvv") as HTMLInputElement).value.trim();
+    // Checagens locais antes de gastar uma tentativa de cobrança: erro de
+    // digitação vira mensagem instantânea em vez de recusa do emissor.
+    const parsedExpiry = parseExpiry(expiry);
+    if (!parsedExpiry) {
+      setError("Validade inválida. Confira o mês e o ano impressos no cartão.");
+      setStatus("error");
+      return;
+    }
+    if (!isValidCpf(cpf)) {
+      setError("CPF inválido. Confira os números digitados.");
+      setStatus("error");
+      return;
+    }
+
+    const cardDigits = number.replace(/\D/g, "");
+    const cpfDigits = cpf.replace(/\D/g, "");
+    const phoneDigits = phoneNumber.replace(/\D/g, "");
 
     setStatus("loading");
     setError("");
 
     try {
-      const brand = await efiPay.CreditCard.setCardNumber(number).verifyCardBrand();
+      const brand = await efiPay.CreditCard.setCardNumber(cardDigits).verifyCardBrand();
 
       const tokenResult = await efiPay.CreditCard.setAccount(gnClientId)
         .setEnvironment("production")
         .setCreditCardData({
           brand,
-          number,
+          number: cardDigits,
           cvv,
-          expirationMonth,
-          expirationYear,
-          holderName,
-          holderDocument,
+          expirationMonth: parsedExpiry.month,
+          expirationYear: parsedExpiry.year,
+          holderName: holderName.trim(),
+          holderDocument: cpfDigits,
           reuse: false,
         })
         .getPaymentToken();
 
       const fd = new FormData();
       fd.set("paymentToken", tokenResult.payment_token);
-      fd.set("cardName", holderName);
-      fd.set("cpf", holderDocument);
-      fd.set("phoneNumber", phoneNumber);
+      fd.set("cardName", holderName.trim());
+      fd.set("cpf", cpfDigits);
+      fd.set("phoneNumber", phoneDigits);
 
       const result = await chargeSupporterCreditCardAction(null, fd);
 
@@ -412,35 +426,34 @@ function CreditCardPayment({
           name="number"
           inputMode="numeric"
           autoComplete="cc-number"
-          placeholder="Número do cartão"
+          placeholder="0000 0000 0000 0000"
           required
-          className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/40 focus:outline-none"
+          disabled={status === "loading"}
+          value={number}
+          onChange={(e) => setNumber(formatCardNumber(e.target.value))}
+          className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/30 focus:outline-none"
         />
         <input
           name="holderName"
           autoComplete="cc-name"
           placeholder="Nome impresso no cartão"
           required
-          className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/40 focus:outline-none"
+          disabled={status === "loading"}
+          value={holderName}
+          onChange={(e) => setHolderName(e.target.value)}
+          className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/30 focus:outline-none"
         />
         <div className="flex gap-3">
           <input
-            name="expirationMonth"
+            name="expiry"
             inputMode="numeric"
-            autoComplete="cc-exp-month"
-            placeholder="MM"
-            maxLength={2}
+            autoComplete="cc-exp"
+            placeholder="MM/AA"
             required
-            className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/40 focus:outline-none"
-          />
-          <input
-            name="expirationYear"
-            inputMode="numeric"
-            autoComplete="cc-exp-year"
-            placeholder="AAAA"
-            maxLength={4}
-            required
-            className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/40 focus:outline-none"
+            disabled={status === "loading"}
+            value={expiry}
+            onChange={(e) => setExpiry(formatExpiry(e.target.value))}
+            className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/30 focus:outline-none"
           />
           <input
             name="cvv"
@@ -449,23 +462,33 @@ function CreditCardPayment({
             placeholder="CVV"
             maxLength={4}
             required
-            className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/40 focus:outline-none"
+            disabled={status === "loading"}
+            value={cvv}
+            onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
+            className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/30 focus:outline-none"
           />
         </div>
         <input
           name="holderDocument"
           inputMode="numeric"
-          placeholder="CPF do titular"
+          placeholder="000.000.000-00"
           required
-          className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/40 focus:outline-none"
+          disabled={status === "loading"}
+          value={cpf}
+          onChange={(e) => setCpf(formatCpf(e.target.value))}
+          className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/30 focus:outline-none"
         />
         <input
           name="phoneNumber"
           type="tel"
+          inputMode="numeric"
           autoComplete="tel"
-          placeholder="Telefone (com DDD)"
+          placeholder="(00) 00000-0000"
           required
-          className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/40 focus:outline-none"
+          disabled={status === "loading"}
+          value={phoneNumber}
+          onChange={(e) => setPhoneNumber(formatBrPhone(e.target.value))}
+          className="w-full rounded-xl bg-white/10 px-4 py-3.5 text-base text-white placeholder:text-white/30 focus:outline-none"
         />
 
         {error && (

@@ -2,17 +2,10 @@
 
 import { useState } from "react";
 import { TextField } from "@/components/TextField";
+import { formatBrPhone } from "@/lib/card-format";
 
-// Máscara (DD) NNNNN-NNNN — o valor de verdade que vai no FormData (campo
-// `name`) fica só com dígitos; a máscara é puramente visual.
-function formatBrPhone(digits: string): string {
-  if (digits.length <= 2) return digits;
-  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  if (digits.length <= 10) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
-  }
-  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
-}
+// A máscara (DD) NNNNN-NNNN é puramente visual — o valor de verdade que vai
+// no FormData (campo `name`) fica só com dígitos.
 
 type Props = {
   name: string;

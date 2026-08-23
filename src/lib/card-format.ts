@@ -85,6 +85,18 @@ export function isValidCpf(raw: string): boolean {
   return checkDigit(9) === Number(digits[9]) && checkDigit(10) === Number(digits[10]);
 }
 
+// (DD) NNNNN-NNNN. Aceita valor já mascarado (limpa antes), então serve
+// tanto pro PhoneInput quanto pra campos soltos de telefone.
+export function formatBrPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) {
+    return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  }
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
 export function formatBrl(cents: number): string {
   return (cents / 100).toFixed(2).replace(".", ",");
 }
