@@ -1,4 +1,5 @@
-import { Schema, model, models, type InferSchemaType } from "mongoose";
+import { Schema, type InferSchemaType } from "mongoose";
+import { registerModel } from "@/lib/models/register-model";
 
 const paymentSchema = new Schema(
   {
@@ -20,4 +21,4 @@ const paymentSchema = new Schema(
 
 export type Payment = InferSchemaType<typeof paymentSchema> & { _id: string };
 
-export const PaymentModel = models.Payment ?? model("Payment", paymentSchema);
+export const PaymentModel = registerModel("Payment", paymentSchema);

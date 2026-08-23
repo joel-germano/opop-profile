@@ -1,4 +1,5 @@
-import { Schema, model, models, type InferSchemaType } from "mongoose";
+import { Schema, type InferSchemaType } from "mongoose";
+import { registerModel } from "@/lib/models/register-model";
 
 // Cobrança paralela ao Payment (que é do fluxo Premium/User) — paga uma vez,
 // desbloqueia a Supporter pra sempre (não é por candidato/geração).
@@ -24,4 +25,4 @@ export type SupporterPurchase = InferSchemaType<typeof supporterPurchaseSchema> 
 };
 
 export const SupporterPurchaseModel =
-  models.SupporterPurchase ?? model("SupporterPurchase", supporterPurchaseSchema);
+  registerModel("SupporterPurchase", supporterPurchaseSchema);

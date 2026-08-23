@@ -47,7 +47,17 @@ export async function POST(request: Request) {
         if (payment.status === "refunded") continue;
         payment.status = "refunded";
         await payment.save();
-        await UserModel.findByIdAndUpdate(payment.userId, { plan: "free" });
+
+        // Só rebaixa se este era o último pagamento válido — quem pagou
+        // duas vezes e teve uma estornada continua Premium pela outra.
+        const stillPaid = await PaymentModel.exists({
+          userId: payment.userId,
+          status: "paid",
+          _id: { $ne: payment._id },
+        });
+        if (!stillPaid) {
+          await UserModel.findByIdAndUpdate(payment.userId, { plan: "free" });
+        }
         continue;
       }
 

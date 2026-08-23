@@ -1,4 +1,5 @@
-import { Schema, model, models, type InferSchemaType } from "mongoose";
+import { Schema, type InferSchemaType } from "mongoose";
+import { registerModel } from "@/lib/models/register-model";
 
 // Foto pública de quem gerou/compartilhou um card de apoio a um Candidate.
 // Guarda por slug (não ObjectId) — o componente que posta já tem o slug em
@@ -20,4 +21,4 @@ const galleryPostSchema = new Schema(
 
 export type GalleryPost = InferSchemaType<typeof galleryPostSchema> & { _id: string };
 
-export const GalleryPostModel = models.GalleryPost ?? model("GalleryPost", galleryPostSchema);
+export const GalleryPostModel = registerModel("GalleryPost", galleryPostSchema);

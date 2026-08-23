@@ -48,7 +48,17 @@ export async function POST(request: Request) {
         if (purchase.status === "refunded") continue;
         purchase.status = "refunded";
         await purchase.save();
-        await SupporterModel.findByIdAndUpdate(purchase.supporterId, { unlocked: false });
+
+        // Só re-tranca se esta era a última compra válida (mesma regra do
+        // webhook do Premium).
+        const stillPaid = await SupporterPurchaseModel.exists({
+          supporterId: purchase.supporterId,
+          status: "paid",
+          _id: { $ne: purchase._id },
+        });
+        if (!stillPaid) {
+          await SupporterModel.findByIdAndUpdate(purchase.supporterId, { unlocked: false });
+        }
         continue;
       }
 

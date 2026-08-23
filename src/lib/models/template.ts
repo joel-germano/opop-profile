@@ -1,4 +1,5 @@
-import { Schema, model, models, type InferSchemaType } from "mongoose";
+import { Schema, type InferSchemaType } from "mongoose";
+import { registerModel } from "@/lib/models/register-model";
 
 const templateSchema = new Schema(
   {
@@ -15,4 +16,4 @@ const templateSchema = new Schema(
 
 export type Template = InferSchemaType<typeof templateSchema> & { _id: string };
 
-export const TemplateModel = models.Template ?? model("Template", templateSchema);
+export const TemplateModel = registerModel("Template", templateSchema);

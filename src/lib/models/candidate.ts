@@ -1,4 +1,5 @@
-import { Schema, model, models, type InferSchemaType } from "mongoose";
+import { Schema, type InferSchemaType } from "mongoose";
+import { registerModel } from "@/lib/models/register-model";
 
 // Candidato à presidência — entidade PARALELA ao User/candidato-de-campanha
 // já existente. Cadastrado só pelo admin (não é self-service via /cadastro).
@@ -19,4 +20,4 @@ const candidateSchema = new Schema(
 
 export type Candidate = InferSchemaType<typeof candidateSchema> & { _id: string };
 
-export const CandidateModel = models.Candidate ?? model("Candidate", candidateSchema);
+export const CandidateModel = registerModel("Candidate", candidateSchema);

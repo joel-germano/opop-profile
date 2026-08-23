@@ -1,4 +1,5 @@
-import { Schema, model, models, type InferSchemaType } from "mongoose";
+import { Schema, type InferSchemaType } from "mongoose";
+import { registerModel } from "@/lib/models/register-model";
 
 // Molduras de um Candidate — separado do Template (que pertence a um User)
 // de propósito, já que essa é uma modalidade paralela e admin-gerenciada.
@@ -15,4 +16,4 @@ export type CandidateTemplate = InferSchemaType<typeof candidateTemplateSchema> 
 };
 
 export const CandidateTemplateModel =
-  models.CandidateTemplate ?? model("CandidateTemplate", candidateTemplateSchema);
+  registerModel("CandidateTemplate", candidateTemplateSchema);

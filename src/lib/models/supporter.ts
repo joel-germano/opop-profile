@@ -1,4 +1,5 @@
-import { Schema, model, models, type InferSchemaType } from "mongoose";
+import { Schema, type InferSchemaType } from "mongoose";
+import { registerModel } from "@/lib/models/register-model";
 
 // Identidade leve de quem paga pra gerar uma foto de apoio a um Candidate.
 // Não é um User (candidato/dono de página) — não tem username, painel,
@@ -23,4 +24,4 @@ const supporterSchema = new Schema(
 
 export type Supporter = InferSchemaType<typeof supporterSchema> & { _id: string };
 
-export const SupporterModel = models.Supporter ?? model("Supporter", supporterSchema);
+export const SupporterModel = registerModel("Supporter", supporterSchema);

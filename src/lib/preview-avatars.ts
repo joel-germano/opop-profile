@@ -6,7 +6,7 @@
 // mantendo o mesmo nome. Sem isso, navegador/service worker/CDN continuam
 // servindo a imagem antiga, já que a URL não mudou (mesmo padrão de
 // PERSONA_ICON_VERSION em lib/assets.ts).
-const PERSONAS_VERSION = 3;
+const PERSONAS_VERSION = 4;
 
 export const PREVIEW_AVATARS = [
   "01",

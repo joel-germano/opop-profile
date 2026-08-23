@@ -25,6 +25,13 @@ export async function createPixChargeAction(): Promise<PixChargeResult> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Sessão expirada, faça login novamente." };
 
+  // Trava contra cobrança duplicada: a página já esconde o checkout de quem
+  // é Premium, mas uma aba aberta de antes (ou que virou Premium por outro
+  // meio no meio do caminho) ainda conseguiria disparar esta action.
+  if (user.plan === "premium") {
+    return { ok: false, error: "Sua conta já é Premium — nada a pagar." };
+  }
+
   try {
     await connectDB();
     const charge = await createPixCharge({
@@ -62,6 +69,12 @@ export async function chargeCreditCardAction(
 ): Promise<CreditCardState> {
   const user = await getCurrentUser();
   if (!user) return { error: "Sessão expirada, faça login novamente." };
+
+  // Mesma trava do Pix — aqui é ainda mais crítica: o cartão cobra de
+  // verdade e na hora, então sem isso dá pra pagar duas vezes pelo mesmo.
+  if (user.plan === "premium") {
+    return { error: "Sua conta já é Premium — nada a pagar." };
+  }
 
   const paymentToken = String(formData.get("paymentToken") ?? "");
   const cardName = String(formData.get("cardName") ?? "").trim();

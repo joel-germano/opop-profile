@@ -80,6 +80,12 @@ export async function createSupporterPixChargeAction(): Promise<PixChargeResult>
   const supporter = await getCurrentSupporter();
   if (!supporter) return { ok: false, error: "Sessão expirada, identifique-se novamente." };
 
+  // Trava contra cobrança duplicada (mesma do checkout Premium): quem já
+  // desbloqueou não tem o que pagar de novo.
+  if (supporter.unlocked) {
+    return { ok: false, error: "Seu acesso já está liberado — nada a pagar." };
+  }
+
   try {
     await connectDB();
     const charge = await createPixChargePresidenciaveis({
@@ -116,6 +122,11 @@ export async function chargeSupporterCreditCardAction(
 ): Promise<CreditCardState> {
   const supporter = await getCurrentSupporter();
   if (!supporter) return { error: "Sessão expirada, identifique-se novamente." };
+
+  // Mesma trava do Pix — no cartão é ainda mais crítica: cobra na hora.
+  if (supporter.unlocked) {
+    return { error: "Seu acesso já está liberado — nada a pagar." };
+  }
 
   const paymentToken = String(formData.get("paymentToken") ?? "");
   const cardName = String(formData.get("cardName") ?? "").trim();
