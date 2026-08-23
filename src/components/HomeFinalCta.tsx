@@ -13,7 +13,7 @@ export function HomeFinalCta() {
       </h2>
       <div className="flex w-full max-w-xs flex-col gap-3">
         <Link
-          href="/cadastro"
+          href="/painel"
           className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-danger text-base font-semibold text-white transition active:scale-95 hover:bg-danger-dark"
         >
           <Camera size={18} strokeWidth={2} />

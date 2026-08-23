@@ -2,28 +2,47 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { Camera, Menu } from "lucide-react";
+import Link from "next/link";
+import { Camera, Pencil, Menu, Share2 } from "lucide-react";
 import { TemplateCarousel3D } from "@/components/TemplateCarousel3D";
 import { PhotoEditorModal } from "@/components/PhotoEditorModal";
-import { DirceuMenuModal } from "@/components/DirceuMenuModal";
+import { CampaignMenuModal } from "@/components/CampaignMenuModal";
+import { CampaignShareModal } from "@/components/CampaignShareModal";
+import { SITE_URL } from "@/lib/site";
 import type { Template } from "@/lib/templates";
 
 type CampaignUser = {
   name: string;
+  username: string;
   photoUrl: string;
+  title: string;
+  description: string;
+  caption: string;
+  coverUrl?: string;
 };
 
 export function CampaignPageClient({
   templates,
   user,
+  isViewerLoggedIn,
+  viewerName,
+  viewerEmail,
+  viewerPhotoUrl,
 }: {
   templates: Template[];
   user: CampaignUser;
+  isViewerLoggedIn: boolean;
+  viewerName?: string;
+  viewerEmail?: string;
+  viewerPhotoUrl?: string;
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const profileUrl = `${SITE_URL}/${user.username}`;
+  const profileUrlDisplay = profileUrl.replace(/^https?:\/\//, "");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -43,15 +62,13 @@ export function CampaignPageClient({
       <div className="hidden md:block flex-1 bg-[#2A2A2A]" />
 
       <main
-        className="flex w-full flex-col items-center gap-8 overflow-x-hidden py-10 md:w-120 md:flex-none border-x border-white/10 bg-[#2A2A2A]"
+        className="flex w-full flex-col items-center gap-6 overflow-x-hidden px-5 py-8 sm:gap-8 sm:px-6 sm:py-10 md:w-120 md:flex-none border-x border-white/10 bg-[#2A2A2A]"
         style={{
-          paddingTop: "max(2.5rem, env(safe-area-inset-top))",
-          paddingBottom: "max(2.5rem, env(safe-area-inset-bottom))",
-          paddingLeft: "env(safe-area-inset-left)",
-          paddingRight: "env(safe-area-inset-right)",
+          paddingTop: "max(2rem, env(safe-area-inset-top))",
+          paddingBottom: "max(2rem, env(safe-area-inset-bottom))",
         }}
       >
-        <div className="w-full px-6">
+        <div className="w-full">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2 rounded-full bg-white/10 py-1.5 pl-1.5 pr-4">
               <Image
@@ -61,9 +78,7 @@ export function CampaignPageClient({
                 height={40}
                 className="h-10 w-10 rounded-full object-cover"
               />
-              <span className="text-lg font-bold text-white">
-                {user.name}
-              </span>
+              <span className="text-sm font-bold text-white">{user.name}</span>
             </div>
 
             <button
@@ -77,19 +92,30 @@ export function CampaignPageClient({
           </div>
 
           <div className="mt-10 text-center">
-            <h1 className="font-heading text-3xl font-normal tracking-wide text-white">
-              Um vice pra chamar Dirceu
+            <h1 className="text-2xl font-bold tracking-tight text-white">
+              {user.title}
             </h1>
 
-            <p className="mt-4 text-lg leading-snug text-white/60">
-              Mostre que você tem um vice pra chamar Dirceu. Adicione a
-              moldura à sua foto e compartilhe esse apoio nas redes.
-            </p>
+            {user.description && (
+              <p className="mt-3 text-base leading-snug text-white/60">
+                {user.description}
+              </p>
+            )}
+
+            {isViewerLoggedIn && (
+              <Link
+                href="/painel"
+                className="mt-4 inline-flex items-center gap-2 rounded-full border border-danger/40 bg-danger/10 px-3.5 py-2 text-sm font-semibold text-danger-light transition hover:bg-danger/15"
+              >
+                <Pencil size={16} strokeWidth={2} />
+                Editar informações
+              </Link>
+            )}
           </div>
         </div>
 
         {templates.length === 0 ? (
-          <p className="px-6 text-center text-base text-white/50">
+          <p className="text-center text-base text-white/50">
             Ainda não há molduras configuradas por aqui.
           </p>
         ) : (
@@ -107,6 +133,19 @@ export function CampaignPageClient({
             >
               <Camera size={20} strokeWidth={1.75} />
               Escolha sua foto
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsShareOpen(true)}
+              className="flex h-11 w-full max-w-xs items-center gap-2 rounded-full bg-white/5 py-1.5 pl-4 pr-1.5 ring-1 ring-white/10 transition hover:bg-white/10"
+            >
+              <span className="flex-1 truncate text-left text-sm text-white/60">
+                {profileUrlDisplay}
+              </span>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-black">
+                <Share2 size={15} strokeWidth={2} />
+              </span>
             </button>
 
             <input
@@ -140,12 +179,31 @@ export function CampaignPageClient({
           initialIndex={activeIndex}
           key={photoUrl}
           photoUrl={photoUrl}
+          shareCaption={user.caption}
+          campaignUsername={user.username}
           onClose={handleCloseEditor}
           onRequestNewPhoto={() => fileInputRef.current?.click()}
         />
       )}
 
-      {isMenuOpen && <DirceuMenuModal onClose={() => setIsMenuOpen(false)} />}
+      {isMenuOpen && (
+        <CampaignMenuModal
+          isLoggedIn={isViewerLoggedIn}
+          viewerName={viewerName}
+          viewerEmail={viewerEmail}
+          viewerPhotoUrl={viewerPhotoUrl}
+          onClose={() => setIsMenuOpen(false)}
+        />
+      )}
+
+      {isShareOpen && (
+        <CampaignShareModal
+          url={profileUrl}
+          title={user.title}
+          coverUrl={user.coverUrl}
+          onClose={() => setIsShareOpen(false)}
+        />
+      )}
     </div>
   );
 }

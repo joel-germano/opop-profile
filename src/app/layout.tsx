@@ -25,12 +25,6 @@ const gasoekOne = Gasoek_One({
   display: "swap",
 });
 
-const madeFlorenceSans = localFont({
-  src: "./fonts/made-florence-sans.otf",
-  variable: "--font-made-florence",
-  display: "swap",
-});
-
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -94,7 +88,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="pt-BR"
-      className={`${bahnschrift.variable} ${madeFlorenceSans.variable} ${manrope.variable} ${gasoekOne.variable} h-full antialiased`}
+      className={`${bahnschrift.variable} ${manrope.variable} ${gasoekOne.variable} h-full antialiased`}
     >
       <body
         className="min-h-full flex flex-col overscroll-none bg-[#2A2A2A] font-sans antialiased"

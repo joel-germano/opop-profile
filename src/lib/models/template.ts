@@ -2,7 +2,11 @@ import { Schema, model, models, type InferSchemaType } from "mongoose";
 
 const templateSchema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
+    // Um dos dois sempre presente: userId (conta de verdade) ou draftId
+    // (rascunho anônimo, antes de logar/cadastrar — ver lib/draft.ts).
+    // claimDraft() troca draftId por userId quando a conta é criada.
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
+    draftId: { type: String },
     imageUrl: { type: String, required: true },
     order: { type: Number, default: 0 },
   },

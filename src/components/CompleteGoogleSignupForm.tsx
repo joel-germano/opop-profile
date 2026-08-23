@@ -8,10 +8,8 @@ import {
   type CompleteSignupState,
 } from "@/app/(auth)/cadastro/completar/actions";
 import { resizeImageToSquareDataUrl } from "@/lib/resize-avatar";
-import { slugifyUsername } from "@/lib/slug";
 import { TextField } from "@/components/TextField";
 import { PhoneInput } from "@/components/PhoneInput";
-import { UsernameField } from "@/components/UsernameField";
 
 const initialState: CompleteSignupState = null;
 
@@ -67,13 +65,6 @@ export function CompleteGoogleSignupForm({ initialName }: { initialName: string 
         autoComplete="name"
         placeholder="Nome completo (aparece no seu perfil)"
         defaultValue={initialName}
-        required
-      />
-      <UsernameField
-        name="username"
-        autoComplete="username"
-        placeholder="seu-nome"
-        defaultValue={slugifyUsername(initialName)}
         required
       />
       <PhoneInput name="whatsapp" placeholder="WhatsApp (opcional)" />

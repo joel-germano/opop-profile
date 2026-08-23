@@ -28,7 +28,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[#1c1c1c]">
       <header className="flex items-center justify-between border-b border-white/10 px-6 py-4">
-        <span className="font-heading text-xl font-normal tracking-wide text-white">
+        <span className="text-xl font-bold tracking-tight text-white">
           Admin
         </span>
         <form action={logoutAdminAction}>

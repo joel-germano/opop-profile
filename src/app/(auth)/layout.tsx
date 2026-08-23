@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { BackButton } from "@/components/BackButton";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,12 +8,16 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="hidden md:block flex-1 bg-[#2A2A2A]" />
 
       <main
-        className="flex w-full flex-col items-center gap-8 overflow-x-hidden px-6 py-10 md:w-120 md:flex-none border-x border-white/10 bg-[#2A2A2A]"
+        className="flex w-full flex-col items-center gap-5 overflow-x-hidden px-6 py-5 md:w-120 md:flex-none border-x border-white/10 bg-[#2A2A2A]"
         style={{
-          paddingTop: "max(2.5rem, env(safe-area-inset-top))",
-          paddingBottom: "max(2.5rem, env(safe-area-inset-bottom))",
+          paddingTop: "max(1.25rem, env(safe-area-inset-top))",
+          paddingBottom: "max(1.25rem, env(safe-area-inset-bottom))",
         }}
       >
+        <div className="flex w-full items-center">
+          <BackButton />
+        </div>
+
         <Link href="/">
           <Image
             src="/logo-opop-v3.png"

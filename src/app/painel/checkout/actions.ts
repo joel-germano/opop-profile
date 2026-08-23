@@ -4,11 +4,21 @@ import { connectDB } from "@/lib/db";
 import { PaymentModel } from "@/lib/models/payment";
 import { UserModel } from "@/lib/models/user";
 import { getCurrentUser } from "@/lib/auth";
-import { createPixCharge, chargeCreditCard } from "@/lib/efi";
+import {
+  createPixCharge,
+  chargeCreditCard,
+  PIX_EXPIRATION_SECONDS,
+} from "@/lib/efi";
 import { PREMIUM_PRICE_CENTS } from "@/lib/plans";
 
 export type PixChargeResult =
-  | { ok: true; txid: string; pixCopiaECola: string; qrCodeImage: string }
+  | {
+      ok: true;
+      txid: string;
+      pixCopiaECola: string;
+      qrCodeImage: string;
+      expiresInSeconds: number;
+    }
   | { ok: false; error: string };
 
 export async function createPixChargeAction(): Promise<PixChargeResult> {
@@ -36,6 +46,7 @@ export async function createPixChargeAction(): Promise<PixChargeResult> {
       txid: charge.txid,
       pixCopiaECola: charge.pixCopiaECola,
       qrCodeImage: charge.qrCodeImage,
+      expiresInSeconds: PIX_EXPIRATION_SECONDS,
     };
   } catch (err) {
     console.error("[createPixChargeAction]", err);

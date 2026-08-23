@@ -24,7 +24,13 @@ export function TemplateTile({ id, imageUrl, isDeleting, onDelete }: Props) {
         isDragging ? "z-10 opacity-70" : ""
       }`}
     >
-      <Image src={imageUrl} alt="Moldura" fill className="object-cover" />
+      <Image
+        src={imageUrl}
+        alt="Moldura"
+        fill
+        sizes="(max-width: 480px) 33vw, 160px"
+        className="object-cover"
+      />
 
       <button
         type="button"

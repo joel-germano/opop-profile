@@ -20,7 +20,9 @@ export async function updateProfileAction(
     .trim()
     .toLowerCase()
     .replace(/^@/, "");
-  const whatsapp = String(formData.get("whatsapp") ?? "").trim();
+  // PhoneInput já manda só dígitos (a máscara é puramente visual no
+  // cliente), mas o servidor nunca confia só nisso — limpa de novo aqui.
+  const whatsapp = String(formData.get("whatsapp") ?? "").replace(/\D/g, "");
   const photoDataUrl = String(formData.get("photoDataUrl") ?? "");
 
   if (!name || !username || !whatsapp) {

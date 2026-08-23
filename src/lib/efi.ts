@@ -88,6 +88,10 @@ async function getCobrancasClient(): Promise<AxiosInstance> {
   });
 }
 
+// Exportado pra o checkout mostrar a contagem regressiva usando exatamente o
+// mesmo prazo que a cobrança tem de verdade na Efí.
+export const PIX_EXPIRATION_SECONDS = 3600;
+
 export async function createPixCharge({
   amountCents,
   description,
@@ -99,7 +103,7 @@ export async function createPixCharge({
   const pixKey = requireEnv("PIX_CHAVE");
 
   const cobResponse = await pix.post("/v2/cob", {
-    calendario: { expiracao: 3600 },
+    calendario: { expiracao: PIX_EXPIRATION_SECONDS },
     valor: { original: (amountCents / 100).toFixed(2) },
     chave: pixKey,
     solicitacaoPagador: description,

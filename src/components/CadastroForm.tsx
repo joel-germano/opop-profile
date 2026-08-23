@@ -4,6 +4,7 @@ import { useActionState, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Script from "next/script";
+import { useSearchParams } from "next/navigation";
 import { Camera, User } from "lucide-react";
 import {
   registerAction,
@@ -13,8 +14,9 @@ import { loginOrRegisterWithGoogleAction } from "@/app/(auth)/login/actions";
 import { resizeImageToSquareDataUrl } from "@/lib/resize-avatar";
 import { TextField } from "@/components/TextField";
 import { PhoneInput } from "@/components/PhoneInput";
-import { UsernameField } from "@/components/UsernameField";
 import { PasswordField } from "@/components/PasswordField";
+import { PublishMolduraPreview } from "@/components/PublishMolduraPreview";
+import { usePublishMoldura } from "@/lib/use-publish-moldura";
 
 const initialState: RegisterState = null;
 
@@ -27,6 +29,9 @@ export function CadastroForm({ googleClientId }: { googleClientId: string }) {
   const [googleError, setGoogleError] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const googleButtonRef = useRef<HTMLDivElement>(null);
+  const moldura = usePublishMoldura();
+  const next = useSearchParams().get("next");
+  const loginHref = next ? `/login?next=${encodeURIComponent(next)}` : "/login";
 
   const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -41,7 +46,7 @@ export function CadastroForm({ googleClientId }: { googleClientId: string }) {
       client_id: googleClientId,
       callback: async (response) => {
         setGoogleError("");
-        const result = await loginOrRegisterWithGoogleAction(response.credential);
+        const result = await loginOrRegisterWithGoogleAction(response.credential, next);
         if (result && "error" in result) setGoogleError(result.error);
       },
     });
@@ -54,15 +59,22 @@ export function CadastroForm({ googleClientId }: { googleClientId: string }) {
 
   return (
     <>
-      <div className="mt-2 text-center">
-        <h1 className="text-2xl font-bold tracking-tight text-white">
-          Crie o perfil da sua campanha
-        </h1>
-        <p className="mt-1.5 text-sm text-white/60">
-          Essas informações aparecem pra quem visitar o seu link — é a
-          página que seus apoiadores vão ver e usar pra montar o card deles.
-        </p>
-      </div>
+      {moldura ? (
+        <PublishMolduraPreview
+          moldura={moldura}
+          title="Crie sua conta pra publicar sua campanha"
+        />
+      ) : (
+        <div className="mt-2 text-center">
+          <h1 className="text-2xl font-bold tracking-tight text-white">
+            Crie o perfil da sua campanha
+          </h1>
+          <p className="mt-1.5 text-sm text-white/60">
+            Essas informações aparecem pra quem visitar o seu link — é a
+            página que seus apoiadores vão ver e usar pra montar o card deles.
+          </p>
+        </div>
+      )}
 
       <Script
         src="https://accounts.google.com/gsi/client"
@@ -84,6 +96,7 @@ export function CadastroForm({ googleClientId }: { googleClientId: string }) {
 
       <form action={formAction} className="flex w-full flex-col gap-4">
         <input type="hidden" name="photoDataUrl" value={photoUrl ?? ""} />
+        <input type="hidden" name="next" value={next ?? ""} />
 
         <div className="flex justify-center">
           <button
@@ -122,12 +135,6 @@ export function CadastroForm({ googleClientId }: { googleClientId: string }) {
           placeholder="Nome completo (aparece no seu perfil)"
           required
         />
-        <UsernameField
-          name="username"
-          autoComplete="username"
-          placeholder="seu-nome"
-          required
-        />
         <PhoneInput name="whatsapp" placeholder="WhatsApp (opcional)" />
         <TextField
           type="email"
@@ -161,7 +168,7 @@ export function CadastroForm({ googleClientId }: { googleClientId: string }) {
       <p className="text-sm text-white/60">
         Já tem conta?{" "}
         <Link
-          href="/login"
+          href={loginHref}
           className="font-medium text-danger-light underline decoration-danger/40 underline-offset-2"
         >
           Entrar

@@ -158,6 +158,44 @@ export async function compositeCard(
   });
 }
 
+// Lado do cliente da capa da campanha: replica exatamente o que a prévia do
+// passo "Modelo de legenda" mostra em CSS (foto em object-cover reduzida a
+// 80%, moldura por cima), só que em resolução de verdade. Gerada ao publicar
+// e guardada como capa da campanha — ver saveCoverAction.
+export const COVER_SIZE = 800;
+
+export async function compositeCoverDataUrl(
+  photoUrl: string,
+  templateSrc: string,
+  size = COVER_SIZE
+): Promise<string> {
+  const [photo, template] = await Promise.all([
+    loadImage(photoUrl),
+    loadImage(templateSrc),
+  ]);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas context unavailable");
+
+  // Mesmo fundo neutro do compositeCard: a foto a 80% não preenche a caixa
+  // toda, então sem isso sobraria transparência nas beiradas.
+  ctx.fillStyle = "#e5e5e5";
+  ctx.fillRect(0, 0, size, size);
+
+  // `object-cover` + `scale-[0.8]` do PainelStepLegenda, na mesma ordem.
+  const scale = Math.max(size / photo.width, size / photo.height) * 0.8;
+  const drawW = photo.width * scale;
+  const drawH = photo.height * scale;
+  ctx.drawImage(photo, (size - drawW) / 2, (size - drawH) / 2, drawW, drawH);
+
+  ctx.drawImage(template, 0, 0, size, size);
+
+  return canvas.toDataURL("image/png");
+}
+
 /**
  * Always saves the file straight to disk. Deliberately does NOT go through the
  * Web Share API: on desktop that opens the OS share sheet, which offers no

@@ -124,7 +124,7 @@ export function SupporterUnlockModal({
       <div className="flex max-h-[85vh] w-full max-w-sm flex-col overflow-hidden rounded-3xl bg-[#1c1c1c] shadow-2xl shadow-black/60 ring-1 ring-white/10">
         <div className="flex shrink-0 items-center justify-between px-4 py-3 sm:py-4">
           <div className="w-10" />
-          <h2 className="font-heading text-lg font-normal tracking-wide text-white">
+          <h2 className="text-lg font-bold tracking-tight text-white">
             Desbloquear
           </h2>
           <button

@@ -17,8 +17,8 @@ export function EffectsPanel({ photoUrl, selectedId, onSelect, onDiscard, onDone
   const stripRef = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="w-full rounded-t-2xl bg-[#2a2a2a] px-4 pb-4 pt-3">
-      <div className="mb-4 flex items-center gap-3">
+    <div className="flex w-full flex-col gap-3 rounded-t-2xl bg-[#2a2a2a] px-5 pb-4 pt-3">
+      <div className="flex items-center gap-3">
         <button
           type="button"
           aria-label="Remover filtro"
@@ -44,7 +44,7 @@ export function EffectsPanel({ photoUrl, selectedId, onSelect, onDiscard, onDone
             <ChevronLeft size={16} strokeWidth={2} />
           </button>
 
-          <div ref={stripRef} className="flex gap-3 overflow-x-auto scrollbar-none">
+          <div ref={stripRef} className="flex gap-3 overflow-x-auto p-1 scrollbar-none">
             {PHOTO_FILTERS.map((filter) => (
             <button
               key={filter.id}

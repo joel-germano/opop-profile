@@ -5,7 +5,9 @@ import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db";
 import { UserModel } from "@/lib/models/user";
 import { createSession, createPendingGoogleSignup } from "@/lib/auth";
+import { claimDraft } from "@/lib/draft";
 import { verifyGoogleIdToken } from "@/lib/google-verify";
+import { resolveNextPath } from "@/lib/safe-redirect";
 
 export type LoginState = { error: string } | null;
 
@@ -36,15 +38,22 @@ export async function loginAction(
     return { error: "Email ou senha incorretos." };
   }
 
+  const next = resolveNextPath(String(formData.get("next") ?? ""));
+  const claimed = await claimDraft(String(user._id));
   await createSession(String(user._id));
-  redirect("/painel");
+  redirect(next ?? (claimed ? "/painel/sucesso" : "/painel"));
 }
 
 export type GoogleAuthState = { error: string } | null;
 
-export async function loginOrRegisterWithGoogleAction(idToken: string): Promise<GoogleAuthState> {
+export async function loginOrRegisterWithGoogleAction(
+  idToken: string,
+  next?: string | null
+): Promise<GoogleAuthState> {
   const googleUser = await verifyGoogleIdToken(idToken);
   if (!googleUser) return { error: "Não foi possível validar o login do Google." };
+
+  const safeNext = resolveNextPath(next);
 
   await connectDB();
   const existing = await UserModel.findOne({
@@ -56,8 +65,9 @@ export async function loginOrRegisterWithGoogleAction(idToken: string): Promise<
       existing.googleId = googleUser.googleId;
       await existing.save();
     }
+    const claimed = await claimDraft(String(existing._id));
     await createSession(String(existing._id));
-    redirect("/painel");
+    redirect(safeNext ?? (claimed ? "/painel/sucesso" : "/painel"));
   }
 
   // Ainda faltam username/whatsapp/foto — guarda o que o Google confirmou e
@@ -66,6 +76,7 @@ export async function loginOrRegisterWithGoogleAction(idToken: string): Promise<
     email: googleUser.email,
     name: googleUser.name,
     googleId: googleUser.googleId,
+    next: safeNext ?? undefined,
   });
   redirect("/cadastro/completar");
 }

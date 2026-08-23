@@ -6,8 +6,11 @@ import { HomeLinkPreview } from "@/components/HomeLinkPreview";
 import { HomeSocialProof } from "@/components/HomeSocialProof";
 import { HomeFinalCta } from "@/components/HomeFinalCta";
 import { HomeFooter } from "@/components/HomeFooter";
+import { getCurrentUser } from "@/lib/auth";
 
-export default function Home() {
+export default async function Home() {
+  const user = await getCurrentUser();
+
   return (
     <div className="flex flex-1 min-h-screen overflow-x-hidden bg-[#2A2A2A]">
       <div className="hidden md:block flex-1 bg-[#2A2A2A]" />
@@ -21,7 +24,7 @@ export default function Home() {
           paddingRight: "env(safe-area-inset-right)",
         }}
       >
-        <HomeHeader />
+        <HomeHeader isLoggedIn={Boolean(user)} />
         <HomeHero />
         <HomeHowItWorks />
         <HomeShowcase />

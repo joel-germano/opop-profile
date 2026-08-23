@@ -14,16 +14,12 @@ import {
 import { downloadImage, shareImage } from "@/lib/composite";
 import { SITE_URL } from "@/lib/site";
 
-const SHARE_TEXT = `Estou apoiando essa campanha! 💙
-
-Um vice pra chamar Dirceu. Junte-se a mim, mostre seu apoio também, monte o seu card e vamos espalhar essa mensagem!
-
-${SITE_URL}/`;
-
 type Props = {
   imageUrl: string;
   blob: Blob;
   fileName: string;
+  caption: string;
+  campaignUsername: string;
   onClose: () => void;
   onStartOver: () => void;
 };
@@ -32,11 +28,14 @@ export function ShareSuccessModal({
   imageUrl,
   blob,
   fileName,
+  caption,
+  campaignUsername,
   onClose,
   onStartOver,
 }: Props) {
   const [copied, setCopied] = useState(false);
   const [shareHint, setShareHint] = useState<string | null>(null);
+  const shareText = `${caption}\n\n${SITE_URL}/${campaignUsername}`;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -60,7 +59,7 @@ export function ShareSuccessModal({
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(SHARE_TEXT);
+      await navigator.clipboard.writeText(shareText);
       setCopied(true);
     } catch {
       setShareHint("Não foi possível copiar o texto.");
@@ -73,7 +72,7 @@ export function ShareSuccessModal({
     // Started without awaiting so the share call below still runs inside the
     // same user activation window (required by Safari/iOS).
     const copyPromise = (
-      navigator.clipboard?.writeText(SHARE_TEXT) ??
+      navigator.clipboard?.writeText(shareText) ??
       Promise.reject(new Error("clipboard unavailable"))
     )
       .then(() => {
@@ -82,7 +81,7 @@ export function ShareSuccessModal({
       })
       .catch(() => false);
 
-    const result = await shareImage(blob, fileName, SHARE_TEXT);
+    const result = await shareImage(blob, fileName, shareText);
     const didCopy = await copyPromise;
 
     if (result === "cancelled") return;
@@ -113,7 +112,7 @@ export function ShareSuccessModal({
     >
       <div className="flex shrink-0 items-center justify-between px-4 py-3 sm:py-4">
         <div className="w-10" />
-        <h2 className="font-heading text-lg font-normal tracking-wide text-white">
+        <h2 className="text-lg font-bold tracking-tight text-white">
           Seu card está pronto
         </h2>
         <button
@@ -183,7 +182,7 @@ export function ShareSuccessModal({
 
           <div className="relative rounded-2xl bg-white/5 p-4 pr-14">
             <p className="whitespace-pre-line text-sm leading-relaxed text-white/80">
-              {SHARE_TEXT}
+              {shareText}
             </p>
 
             <button

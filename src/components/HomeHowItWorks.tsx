@@ -56,7 +56,7 @@ export function HomeHowItWorks() {
       </div>
 
       <Link
-        href="/cadastro"
+        href="/painel"
         className="relative mx-auto mt-8 flex h-12 w-full max-w-xs items-center justify-center gap-2 rounded-full bg-danger text-base font-semibold text-white transition active:scale-95 hover:bg-danger-dark"
       >
         <Camera size={18} strokeWidth={2} />

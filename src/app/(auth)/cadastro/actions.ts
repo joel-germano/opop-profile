@@ -5,7 +5,10 @@ import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/db";
 import { UserModel } from "@/lib/models/user";
 import { createSession } from "@/lib/auth";
+import { getCampaignDraft, claimDraft } from "@/lib/draft";
 import { saveAvatarFromDataUrl } from "@/lib/save-avatar";
+import { resolveNextPath } from "@/lib/safe-redirect";
+import { generateUniqueUsername } from "@/lib/generate-username";
 
 export type RegisterState = { error: string } | null;
 
@@ -14,18 +17,22 @@ export async function registerAction(
   formData: FormData
 ): Promise<RegisterState> {
   const name = String(formData.get("name") ?? "").trim();
-  const username = String(formData.get("username") ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/^@/, "");
-  const whatsapp = String(formData.get("whatsapp") ?? "").trim();
+  const whatsapp = String(formData.get("whatsapp") ?? "").replace(/\D/g, "");
   const email = String(formData.get("email") ?? "")
     .trim()
     .toLowerCase();
   const senha = String(formData.get("senha") ?? "");
   const photoDataUrl = String(formData.get("photoDataUrl") ?? "");
 
-  if (!name || !username || !email || !senha) {
+  // O link (username) normalmente vem do passo "Link da campanha" em
+  // /painel, guardado no rascunho antes de existir conta. Mas nem todo mundo
+  // passa por ali antes de se cadastrar — quem cria a conta direto ainda não
+  // tem link nenhum escolhido, e nesse caso geramos um provisório (ver
+  // generateUniqueUsername) pra pessoa trocar depois em /painel.
+  const draft = await getCampaignDraft();
+  const draftUsername = (draft?.username ?? "").trim().toLowerCase();
+
+  if (!name || !email || !senha) {
     return { error: "Preencha todos os campos." };
   }
   if (!photoDataUrl) {
@@ -34,13 +41,15 @@ export async function registerAction(
   if (senha.length < 6) {
     return { error: "A senha precisa ter pelo menos 6 caracteres." };
   }
-  if (!/^[a-z0-9_.-]+$/.test(username)) {
+  if (draftUsername && !/^[a-z0-9_.-]+$/.test(draftUsername)) {
     return {
-      error: "Username só pode ter letras minúsculas, números, ponto, _ e -.",
+      error: "Link só pode ter letras minúsculas, números, ponto, _ e -.",
     };
   }
 
   await connectDB();
+
+  const username = draftUsername || (await generateUniqueUsername(name));
 
   const existing = await UserModel.findOne({
     $or: [{ email }, { username }],
@@ -50,7 +59,7 @@ export async function registerAction(
       error:
         existing.email === email
           ? "Já existe uma conta com esse email."
-          : "Esse username já está em uso.",
+          : "Esse link já está em uso. Volte e escolha outro.",
     };
   }
 
@@ -72,6 +81,8 @@ export async function registerAction(
     return { error: "Não foi possível criar a conta. Tente novamente." };
   }
 
+  const next = resolveNextPath(String(formData.get("next") ?? ""));
+  const claimed = await claimDraft(userId);
   await createSession(userId);
-  redirect("/painel");
+  redirect(next ?? (claimed ? "/painel/sucesso" : "/painel"));
 }

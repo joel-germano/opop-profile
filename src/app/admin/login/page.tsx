@@ -11,7 +11,7 @@ export default function AdminLoginPage() {
   return (
     <div className="flex flex-1 min-h-screen items-center justify-center bg-[#1c1c1c] px-6">
       <div className="w-full max-w-sm">
-        <h1 className="font-heading text-2xl font-normal tracking-wide text-white">
+        <h1 className="text-2xl font-bold tracking-tight text-white">
           Admin
         </h1>
         <p className="mt-2 text-sm text-white/60">

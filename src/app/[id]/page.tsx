@@ -1,8 +1,43 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { connectDB } from "@/lib/db";
 import { UserModel } from "@/lib/models/user";
 import { TemplateModel } from "@/lib/models/template";
 import { CampaignPageClient } from "@/components/CampaignPageClient";
+import { getCurrentUser } from "@/lib/auth";
+import { DEFAULT_CAPTION } from "@/lib/constants";
+import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/site";
+
+// Título/descrição por campanha — pareiam com a imagem de opengraph-image.tsx
+// (mesma pasta) pra deixar o card de compartilhamento inteiro personalizado,
+// não só a imagem. Sem usuário, cai no metadata genérico do layout raiz.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+
+  await connectDB();
+  const user = await UserModel.findOne({ username: id.toLowerCase() })
+    .select("title description")
+    .lean();
+  if (!user) return {};
+
+  const title = user.title || undefined;
+  const description = user.description || SITE_DESCRIPTION;
+
+  // Next NÃO faz merge profundo de `openGraph`/`twitter` com o metadata do
+  // layout raiz — o que não for repetido aqui (type, siteName, card...) some
+  // em vez de herdar. `images` continua vindo sozinho de opengraph-image.tsx
+  // /twitter-image.tsx (arquivos especiais nesta mesma pasta).
+  return {
+    title,
+    description,
+    openGraph: { title, description, type: "website", siteName: SITE_NAME },
+    twitter: { title, description, card: "summary_large_image" },
+  };
+}
 
 export default async function CampaignPage({
   params,
@@ -12,9 +47,12 @@ export default async function CampaignPage({
   const { id } = await params;
 
   await connectDB();
-  const user = await UserModel.findOne({ username: id.toLowerCase() }).select(
-    "name photoUrl"
-  );
+  const [user, viewer] = await Promise.all([
+    UserModel.findOne({ username: id.toLowerCase() }).select(
+      "name username photoUrl title description caption coverUrl"
+    ),
+    getCurrentUser(),
+  ]);
   if (!user) notFound();
 
   const templateDocs = await TemplateModel.find({ userId: user._id })
@@ -30,7 +68,19 @@ export default async function CampaignPage({
   return (
     <CampaignPageClient
       templates={templates}
-      user={{ name: user.name, photoUrl: user.photoUrl }}
+      user={{
+        name: user.name,
+        username: user.username,
+        photoUrl: user.photoUrl,
+        title: user.title,
+        description: user.description,
+        caption: user.caption || DEFAULT_CAPTION,
+        coverUrl: user.coverUrl,
+      }}
+      isViewerLoggedIn={Boolean(viewer)}
+      viewerName={viewer?.name}
+      viewerEmail={viewer?.email}
+      viewerPhotoUrl={viewer?.photoUrl}
     />
   );
 }

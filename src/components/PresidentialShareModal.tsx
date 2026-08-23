@@ -163,7 +163,7 @@ ${SITE_URL}/presidenciaveis/${candidateSlug}`;
     >
       <div className="flex shrink-0 items-center justify-between px-4 py-3 sm:py-4">
         <div className="w-10" />
-        <h2 className="font-heading text-lg font-normal tracking-wide text-white">
+        <h2 className="text-lg font-bold tracking-tight text-white">
           Seu card está pronto
         </h2>
         <button

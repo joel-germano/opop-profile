@@ -97,7 +97,7 @@ export function PresidentialCandidatePage({
           </div>
 
           <div className="mt-10 text-center">
-            <h1 className="font-heading text-3xl font-normal tracking-wide text-white">
+            <h1 className="text-3xl font-bold tracking-tight text-white">
               Junte-se a {candidate.name}
             </h1>
             <p className="mt-4 text-lg leading-snug text-white/60">

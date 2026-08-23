@@ -19,7 +19,7 @@ export default async function AdminEditCandidatoPage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-heading text-2xl font-normal tracking-wide text-white">
+        <h1 className="text-2xl font-bold tracking-tight text-white">
           Editar candidato
         </h1>
       </div>

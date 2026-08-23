@@ -1,25 +1,13 @@
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
 import { PanelShell } from "@/components/PanelShell";
 
-export default async function PainelLayout({
+// /painel agora é acessível sem login — a pessoa monta a campanha inteira
+// primeiro e só precisa de conta no fim, ao publicar. Rotas que ainda
+// exigem sessão de verdade (perfil, checkout) continuam se protegendo por
+// conta própria dentro de cada page.tsx/actions.ts.
+export default function PainelLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login");
-
-  return (
-    <PanelShell
-      user={{
-        name: user.name,
-        username: user.username,
-        photoUrl: user.photoUrl,
-        plan: user.plan as "free" | "premium",
-      }}
-    >
-      {children}
-    </PanelShell>
-  );
+  return <PanelShell>{children}</PanelShell>;
 }

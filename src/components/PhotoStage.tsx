@@ -40,6 +40,11 @@ type Props = {
   onDeleteText: (id: string) => void;
   onDeselectText: () => void;
   onRequestEditText: (id: string) => void;
+  // Com um painel (texto/efeitos) aberto embaixo, tira o teto de altura
+  // baseado em viewport (52dvh) — a prévia fica larga o quanto o contêiner
+  // permitir, e o modal como um todo rola verticalmente se precisar, em vez
+  // de forçar a foto a ficar pequena só pra caber sem rolagem.
+  compact?: boolean;
 };
 
 function distance(a: Point, b: Point) {
@@ -66,6 +71,7 @@ export const PhotoStage = forwardRef<PhotoStageHandle, Props>(function PhotoStag
     onDeleteText,
     onDeselectText,
     onRequestEditText,
+    compact = false,
   },
   ref
 ) {
@@ -230,7 +236,9 @@ export const PhotoStage = forwardRef<PhotoStageHandle, Props>(function PhotoStag
       onPointerCancel={endPointer}
       onWheel={handleWheel}
       className="relative aspect-square shrink-0 touch-none overflow-hidden rounded-md bg-neutral-200 shadow-2xl select-none"
-      style={{ width: "min(100%, 24rem, 52vh)" }}
+      style={{
+        width: compact ? "min(100%, 24rem)" : "min(100%, 24rem, 52dvh)",
+      }}
     >
       {blurBackground && (
         <Image

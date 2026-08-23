@@ -73,7 +73,7 @@ export function TextEditorPanel({ layer, onChange, onDiscard, onDone }: Props) {
   };
 
   return (
-    <div className="w-full rounded-t-2xl bg-[#2a2a2a] px-4 pb-4 pt-3">
+    <div className="flex w-full flex-col gap-3 rounded-t-2xl bg-[#2a2a2a] px-5 pb-4 pt-3">
       <textarea
         value={layer.text}
         onChange={(e) => onChange({ text: e.target.value })}
@@ -85,11 +85,11 @@ export function TextEditorPanel({ layer, onChange, onDiscard, onDone }: Props) {
           // Keeps the field visible above the on-screen keyboard on mobile.
           e.target.scrollIntoView({ block: "center", behavior: "smooth" });
         }}
-        className="mb-3 w-full resize-none rounded-xl bg-white/10 px-3 py-2 text-base text-white placeholder:text-white/40 focus:outline-none sm:text-sm"
+        className="w-full resize-none rounded-xl bg-white/10 px-3 py-2.5 text-base text-white placeholder:text-white/40 focus:outline-none sm:text-sm"
       />
 
-      <div className="relative mb-3">
-        <div className="flex items-center gap-2 rounded-full bg-white/10 px-2 py-2">
+      <div className="relative">
+        <div className="flex items-center gap-2 rounded-full bg-white/10 px-2 py-1">
           <button
             type="button"
             aria-label="Fonte anterior"
@@ -101,7 +101,7 @@ export function TextEditorPanel({ layer, onChange, onDiscard, onDone }: Props) {
           <button
             type="button"
             onClick={() => setIsFontListOpen((v) => !v)}
-            className="flex-1 truncate rounded-full py-2 text-center text-base font-medium text-white transition active:bg-white/10"
+            className="flex-1 truncate rounded-full py-1.5 text-center text-base font-medium text-white transition active:bg-white/10"
           >
             {layer.fontLabel}
           </button>
@@ -137,7 +137,7 @@ export function TextEditorPanel({ layer, onChange, onDiscard, onDone }: Props) {
         )}
       </div>
 
-      <div className="mb-3 flex h-12 items-stretch gap-2">
+      <div className="flex h-12 items-stretch gap-2">
         <div className="flex flex-1 items-center justify-between rounded-full bg-white/10 pl-1 pr-3">
           <button
             type="button"
@@ -186,7 +186,7 @@ export function TextEditorPanel({ layer, onChange, onDiscard, onDone }: Props) {
         </div>
       </div>
 
-      <div className="mb-4 flex items-center gap-2">
+      <div className="flex items-center gap-2">
         <button
           type="button"
           aria-label="Escolher cor personalizada"

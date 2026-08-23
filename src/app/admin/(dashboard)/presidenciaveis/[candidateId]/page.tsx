@@ -34,7 +34,7 @@ export default async function AdminEditCandidatePage({
   return (
     <div className="flex flex-col gap-10">
       <div className="flex items-center justify-between">
-        <h1 className="font-heading text-2xl font-normal tracking-wide text-white">
+        <h1 className="text-2xl font-bold tracking-tight text-white">
           Editar candidato
         </h1>
         <form action={deleteCandidateAction.bind(null, candidateId)}>
@@ -57,7 +57,7 @@ export default async function AdminEditCandidatePage({
       />
 
       <div className="flex flex-col gap-3">
-        <h2 className="font-heading text-xl font-normal tracking-wide text-white">
+        <h2 className="text-xl font-bold tracking-tight text-white">
           Molduras
         </h2>
         <AdminCandidateTemplatesManager
@@ -67,7 +67,7 @@ export default async function AdminEditCandidatePage({
       </div>
 
       <div className="flex flex-col gap-3">
-        <h2 className="font-heading text-xl font-normal tracking-wide text-white">
+        <h2 className="text-xl font-bold tracking-tight text-white">
           Galeria ({galleryPosts.length})
         </h2>
         <AdminGalleryModeration

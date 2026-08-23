@@ -1,14 +1,19 @@
+import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { ProfileForm } from "@/components/ProfileForm";
+import { BackButton } from "@/components/BackButton";
 
 export default async function PerfilPage() {
   const user = await getCurrentUser();
-  if (!user) return null; // já redirecionado pelo layout/proxy do /painel
+  // /painel não exige mais login (ver painel/layout.tsx), mas essa tela
+  // continua exigindo conta de verdade — se protege sozinha.
+  if (!user) redirect("/login");
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-heading text-3xl font-normal tracking-wide text-white">
+        <BackButton />
+        <h1 className="mt-4 text-lg font-bold tracking-tight text-white">
           Meu perfil
         </h1>
         <p className="mt-2 text-base text-white/60">

@@ -49,9 +49,15 @@ export function TemplateCarousel3D({ templates, activeIndex, onSelect }: Props) 
 
   return (
     <div className="flex w-full flex-col items-center gap-4">
+      {/* Recorta só a horizontal (esconde as molduras vizinhas saindo pela
+          lateral) sem usar overflow: setar overflow-x sozinho faz o CSS
+          tratar overflow-y como "auto" também (regra da spec: só um dos dois
+          eixos pode ficar "visible" por vez) — cortando de novo a sombra do
+          card ativo por cima/baixo. clip-path não tem essa amarração entre
+          eixos, então dá pra cortar só os lados e deixar cima/baixo livres. */}
       <div
-        className="relative w-full overflow-hidden"
-        style={{ perspective: "1200px" }}
+        className="relative w-full"
+        style={{ perspective: "1200px", clipPath: "inset(-200px 0)" }}
       >
         <div
           className="relative w-full touch-pan-y select-none"

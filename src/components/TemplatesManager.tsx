@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ImagePlus, Loader2, Upload } from "lucide-react";
 import {
@@ -17,20 +16,23 @@ import {
   addTemplateAction,
   deleteTemplateAction,
   reorderTemplatesAction,
-} from "@/app/painel/configuracoes/actions";
+} from "@/app/painel/actions";
 import { resizeTemplateToDataUrl } from "@/lib/resize-template";
 import { TemplateTile } from "@/components/TemplateTile";
+import { PremiumUpsellModal } from "@/components/PremiumUpsellModal";
 
 type TemplateItem = { id: string; imageUrl: string };
 
 export function TemplatesManager({
   templates,
   limit,
-  plan,
+  isLoggedIn,
+  premiumPriceCents,
 }: {
   templates: TemplateItem[];
   limit: number;
-  plan: "free" | "premium";
+  isLoggedIn: boolean;
+  premiumPriceCents: number;
 }) {
   const [items, setItems] = useState(templates);
   // Ressincroniza com o servidor sempre que a prop `templates` mudar (ex:
@@ -47,6 +49,7 @@ export function TemplatesManager({
   const [error, setError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
@@ -56,6 +59,14 @@ export function TemplatesManager({
   );
 
   const canAddMore = items.length < limit;
+
+  const handleAddClick = () => {
+    if (!canAddMore) {
+      setShowPremiumModal(true);
+      return;
+    }
+    fileInputRef.current?.click();
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -81,6 +92,10 @@ export function TemplatesManager({
       const result = await addTemplateAction(null, fd);
       setIsUploading(false);
       if (result && "error" in result) {
+        if (result.limitReached) {
+          setShowPremiumModal(true);
+          return;
+        }
         setError(result.error);
         return;
       }
@@ -161,29 +176,32 @@ export function TemplatesManager({
           )}
         </button>
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <DndContext
+          id="templates-dnd"
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
           <SortableContext items={items.map((t) => t.id)} strategy={rectSortingStrategy}>
             <div className="grid grid-cols-3 gap-3">
-              {canAddMore && (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isPending}
-                  className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/25 bg-primary/10 text-primary-light transition active:scale-95 hover:border-primary-light hover:bg-primary/15 disabled:opacity-60"
-                >
-                  {isUploading ? (
-                    <>
-                      <Loader2 size={24} className="animate-spin" />
-                      <span className="text-xs font-bold">Enviando...</span>
-                    </>
-                  ) : (
-                    <>
-                      <ImagePlus size={24} strokeWidth={2} />
-                      <span className="text-xs font-bold">Adicionar</span>
-                    </>
-                  )}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={handleAddClick}
+                disabled={isPending}
+                className="flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/25 bg-primary/10 text-primary-light transition active:scale-95 hover:border-primary-light hover:bg-primary/15 disabled:opacity-60"
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 size={24} className="animate-spin" />
+                    <span className="text-xs font-bold">Enviando...</span>
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus size={24} strokeWidth={2} />
+                    <span className="text-xs font-bold">Adicionar</span>
+                  </>
+                )}
+              </button>
 
               {items.map((t) => (
                 <TemplateTile
@@ -207,20 +225,18 @@ export function TemplatesManager({
         onChange={handleFileChange}
       />
 
-      {!canAddMore && plan === "free" && (
-        <p className="text-sm text-white/60">
-          Contas free podem ter só 1 moldura.{" "}
-          <Link href="/painel/checkout" className="font-medium text-danger-light underline decoration-danger/40 underline-offset-2">
-            Torne-se Premium
-          </Link>{" "}
-          pra adicionar mais.
-        </p>
-      )}
-
       {error && (
         <p className="text-sm text-red-400" role="alert">
           {error}
         </p>
+      )}
+
+      {showPremiumModal && (
+        <PremiumUpsellModal
+          priceCents={premiumPriceCents}
+          isLoggedIn={isLoggedIn}
+          onClose={() => setShowPremiumModal(false)}
+        />
       )}
     </div>
   );

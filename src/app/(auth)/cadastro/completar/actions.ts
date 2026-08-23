@@ -8,7 +8,10 @@ import {
   getPendingGoogleSignup,
   clearPendingGoogleSignup,
 } from "@/lib/auth";
+import { getCampaignDraft, claimDraft } from "@/lib/draft";
 import { saveAvatarFromDataUrl } from "@/lib/save-avatar";
+import { resolveNextPath } from "@/lib/safe-redirect";
+import { generateUniqueUsername } from "@/lib/generate-username";
 
 export type CompleteSignupState = { error: string } | null;
 
@@ -22,26 +25,31 @@ export async function completeGoogleSignupAction(
   }
 
   const name = String(formData.get("name") ?? "").trim();
-  const username = String(formData.get("username") ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/^@/, "");
-  const whatsapp = String(formData.get("whatsapp") ?? "").trim();
+  const whatsapp = String(formData.get("whatsapp") ?? "").replace(/\D/g, "");
   const photoDataUrl = String(formData.get("photoDataUrl") ?? "");
 
-  if (!name || !username) {
+  // O link (username) normalmente vem do passo "Link da campanha" em
+  // /painel, guardado no rascunho antes de existir conta. Quem cria a conta
+  // direto pelo Google sem passar por ali ainda não tem link escolhido — aí
+  // geramos um provisório (ver generateUniqueUsername) pra trocar depois.
+  const draft = await getCampaignDraft();
+  const draftUsername = (draft?.username ?? "").trim().toLowerCase();
+
+  if (!name) {
     return { error: "Preencha todos os campos." };
   }
   if (!photoDataUrl) {
     return { error: "Escolha uma foto de perfil." };
   }
-  if (!/^[a-z0-9_.-]+$/.test(username)) {
+  if (draftUsername && !/^[a-z0-9_.-]+$/.test(draftUsername)) {
     return {
-      error: "Username só pode ter letras minúsculas, números, ponto, _ e -.",
+      error: "Link só pode ter letras minúsculas, números, ponto, _ e -.",
     };
   }
 
   await connectDB();
+
+  const username = draftUsername || (await generateUniqueUsername(name));
 
   const existing = await UserModel.findOne({
     $or: [{ email: pending.email }, { username }],
@@ -51,7 +59,7 @@ export async function completeGoogleSignupAction(
       error:
         existing.email === pending.email
           ? "Já existe uma conta com esse email."
-          : "Esse username já está em uso.",
+          : "Esse link já está em uso. Volte e escolha outro.",
     };
   }
 
@@ -73,6 +81,8 @@ export async function completeGoogleSignupAction(
   }
 
   await clearPendingGoogleSignup();
+  const next = resolveNextPath(pending.next);
+  const claimed = await claimDraft(userId);
   await createSession(userId);
-  redirect("/painel");
+  redirect(next ?? (claimed ? "/painel/sucesso" : "/painel"));
 }

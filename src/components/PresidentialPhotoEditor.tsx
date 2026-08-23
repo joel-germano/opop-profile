@@ -151,7 +151,7 @@ export function PresidentialPhotoEditor({
     >
       <div className="flex shrink-0 items-center justify-between px-3 py-3 sm:px-4 sm:py-4">
         <div className="w-10" />
-        <h2 className="font-heading text-lg font-normal tracking-wide text-white">
+        <h2 className="text-lg font-bold tracking-tight text-white">
           Ajustes
         </h2>
         <button

@@ -5,7 +5,11 @@ import { connectDB } from "@/lib/db";
 import { UserModel, type User } from "@/lib/models/user";
 import { PENDING_GOOGLE_SIGNUP_COOKIE, SESSION_COOKIE } from "@/lib/constants";
 
-const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 30; // 30 dias
+// Sessão de usuário "não deveria expirar sozinha, só quando a pessoa
+// deslogar" — sem sessão deslizante (renovada a cada request) por enquanto,
+// então na prática resolvemos isso com uma validade bem longa (1 ano) em vez
+// de infinita de verdade.
+const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 365; // 365 dias
 const PENDING_SIGNUP_DURATION_SECONDS = 60 * 10; // 10 min pra completar o cadastro
 
 function getSecretKey() {
@@ -64,7 +68,12 @@ export async function getCurrentUser(): Promise<
   };
 }
 
-type PendingGoogleSignup = { email: string; name: string; googleId: string };
+type PendingGoogleSignup = {
+  email: string;
+  name: string;
+  googleId: string;
+  next?: string;
+};
 
 // Guarda os dados verificados do Google entre "detectamos que não tem conta"
 // e "usuário terminou de preencher username/whatsapp/foto" — sem isso teria
@@ -101,7 +110,12 @@ export async function getPendingGoogleSignup(): Promise<PendingGoogleSignup | nu
     ) {
       return null;
     }
-    return { email: payload.email, name: payload.name, googleId: payload.googleId };
+    return {
+      email: payload.email,
+      name: payload.name,
+      googleId: payload.googleId,
+      next: typeof payload.next === "string" ? payload.next : undefined,
+    };
   } catch {
     return null;
   }
