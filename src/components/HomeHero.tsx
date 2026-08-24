@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Camera } from "lucide-react";
-import { HomeModelsMarquee } from "@/components/HomeModelsMarquee";
+import { ModelsMarquee } from "@/components/ModelsMarquee";
 
 export function HomeHero() {
   return (
@@ -50,7 +50,7 @@ export function HomeHero() {
         </a>
       </div>
 
-      <HomeModelsMarquee />
+      <ModelsMarquee />
     </section>
   );
 }

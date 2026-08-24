@@ -3,7 +3,7 @@ import { connectDB } from "@/lib/db";
 import { UserModel } from "@/lib/models/user";
 import { AdminUserForm } from "@/components/AdminUserForm";
 
-export default async function AdminEditCandidatoPage({
+export default async function AdminEditCriadorPage({
   params,
 }: {
   params: Promise<{ userId: string }>;
@@ -20,7 +20,7 @@ export default async function AdminEditCandidatoPage({
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-white">
-          Editar candidato
+          Editar criador
         </h1>
       </div>
 

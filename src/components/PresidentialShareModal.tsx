@@ -1,13 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import {
   Check,
   Copy,
   Download,
+  Globe,
   Images,
+  Lock,
   RotateCcw,
   Share2,
   Sparkles,
@@ -16,19 +17,12 @@ import {
 import { downloadImage, shareImage } from "@/lib/composite";
 import { SITE_URL } from "@/lib/site";
 import {
-  postToGalleryAction,
+  getGalleryFeedAction,
   getGalleryPreviewAction,
-  hasPostedToGalleryAction,
+  type GalleryFeedItem,
 } from "@/app/presidenciaveis/actions";
-
-function blobToDataUrl(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}
+import { setGalleryPostVisibilityAction } from "@/app/presidenciaveis/invite-actions";
+import { GalleryFeedModal } from "@/components/GalleryFeedModal";
 
 // Cópia paralela de ShareSuccessModal.tsx — a única diferença real é a
 // legenda (candidato presidenciável, não a campanha do Dirceu). Duplicado de
@@ -38,7 +32,12 @@ type Props = {
   imageUrl: string;
   blob: Blob;
   fileName: string;
+  // Id do GalleryPost já criado por generateFrameAction — a moldura já foi
+  // salva (privada) antes desse modal nem abrir; aqui só existe o toggle
+  // pra torná-la pública ou não.
+  postId: string;
   candidateSlug: string;
+  candidateName: string;
   onClose: () => void;
   onStartOver: () => void;
 };
@@ -47,22 +46,31 @@ export function PresidentialShareModal({
   imageUrl,
   blob,
   fileName,
+  postId,
   candidateSlug,
+  candidateName,
   onClose,
   onStartOver,
 }: Props) {
-  const SHARE_TEXT = `Junte-se ao seu candidato! 💙
+  const SHARE_TEXT = `Ajuda ${candidateName} a chegar ao topo do ranking! 💙
 
-Escolhi o meu, monte o seu card e vamos espalhar essa mensagem!
+Cada moldura compartilhada conta como 1 apoio de verdade. Escolhi a minha, agora é sua vez, monte a sua e vamos juntos por ${candidateName}!
 
 ${SITE_URL}/presidenciaveis/${candidateSlug}`;
   const [copied, setCopied] = useState(false);
   const [shareHint, setShareHint] = useState<string | null>(null);
-  const [galleryStatus, setGalleryStatus] = useState<"idle" | "posting" | "posted" | "error">(
-    "idle"
+  // Padrão da tela é "público" (não enviesa pra privado) — mas o post nasce
+  // "private" no servidor (generateFrameAction salva antes desse modal nem
+  // abrir), então sincroniza pra público assim que monta, ver useEffect
+  // abaixo. Só fica "private" se a pessoa escolher isso explicitamente.
+  const [visibility, setVisibility] = useState<"private" | "public">("public");
+  const [visibilityError, setVisibilityError] = useState("");
+  const [isToggling, startToggleTransition] = useTransition();
+  const [previewPhotos, setPreviewPhotos] = useState<{ imageUrl: string }[]>(
+    [],
   );
-  const [galleryError, setGalleryError] = useState("");
-  const [previewPhotos, setPreviewPhotos] = useState<{ imageUrl: string }[]>([]);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [galleryItems, setGalleryItems] = useState<GalleryFeedItem[]>([]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -74,30 +82,43 @@ ${SITE_URL}/presidenciaveis/${candidateSlug}`;
 
   useEffect(() => {
     getGalleryPreviewAction(candidateSlug).then(setPreviewPhotos);
-    hasPostedToGalleryAction(candidateSlug).then((posted) => {
-      if (posted) setGalleryStatus("posted");
-    });
   }, [candidateSlug]);
 
-  const handlePostToGallery = async () => {
-    setGalleryStatus("posting");
-    setGalleryError("");
-    try {
-      const dataUrl = await blobToDataUrl(blob);
-      const fd = new FormData();
-      fd.set("imageDataUrl", dataUrl);
-      const result = await postToGalleryAction(candidateSlug, fd);
-      if (result && "error" in result) {
-        setGalleryStatus("error");
-        setGalleryError(result.error);
+  useEffect(() => {
+    startToggleTransition(async () => {
+      const result = await setGalleryPostVisibilityAction(postId, "public");
+      if (result.ok) {
+        setVisibility(result.visibility);
+        getGalleryPreviewAction(candidateSlug).then(setPreviewPhotos);
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postId]);
+
+  const handleSetVisibility = (next: "private" | "public") => {
+    if (next === visibility) return;
+    setVisibilityError("");
+    startToggleTransition(async () => {
+      const result = await setGalleryPostVisibilityAction(postId, next);
+      if (!result.ok) {
+        setVisibilityError(result.error);
         return;
       }
-      setGalleryStatus("posted");
-      getGalleryPreviewAction(candidateSlug).then(setPreviewPhotos);
-    } catch {
-      setGalleryStatus("error");
-      setGalleryError("Não foi possível postar na galeria. Tente novamente.");
-    }
+      setVisibility(result.visibility);
+      if (result.visibility === "public") {
+        getGalleryPreviewAction(candidateSlug).then(setPreviewPhotos);
+      }
+    });
+  };
+
+  // Reaproveita o mesmo modal de galeria completa (com paginação por
+  // cursor) usado no resto da tela do candidato — busca a primeira página
+  // de verdade (com id, pra paginação funcionar) em vez de tentar montar o
+  // modal com os 5 itens do preview (que nem têm id).
+  const handleOpenGallery = async () => {
+    const page = await getGalleryFeedAction(candidateSlug, null);
+    setGalleryItems(page.items);
+    setIsGalleryOpen(true);
   };
 
   useEffect(() => {
@@ -147,7 +168,7 @@ ${SITE_URL}/presidenciaveis/${candidateSlug}`;
     setShareHint(
       didCopy
         ? "Legenda copiada! A imagem já foi baixada — é só anexar."
-        : "A imagem já foi baixada. Copie a legenda acima para enviar junto."
+        : "A imagem já foi baixada. Copie a legenda acima para enviar junto.",
     );
   };
 
@@ -220,13 +241,11 @@ ${SITE_URL}/presidenciaveis/${candidateSlug}`;
         </div>
 
         <p className="animate-rise text-center text-base leading-snug text-white/60">
-          A imagem já foi baixada. Agora é só compartilhar e mostrar seu apoio!
+          A imagem já foi baixada e salva na sua galeria. Agora é só
+          compartilhar e mostrar seu apoio!
         </p>
 
-        <div
-          className="animate-rise mt-9"
-          style={{ animationDelay: "120ms" }}
-        >
+        <div className="animate-rise mt-9" style={{ animationDelay: "120ms" }}>
           <p className="mb-3 text-sm font-medium text-white/80">
             Sugestão de legenda
           </p>
@@ -259,31 +278,74 @@ ${SITE_URL}/presidenciaveis/${candidateSlug}`;
         </div>
 
         <div className="animate-rise mt-8" style={{ animationDelay: "180ms" }}>
-          <button
-            type="button"
-            onClick={handlePostToGallery}
-            disabled={galleryStatus === "posting" || galleryStatus === "posted"}
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white/10 text-sm font-semibold text-white transition active:scale-[0.98] hover:bg-white/20 disabled:opacity-60"
+          <div
+            role="radiogroup"
+            aria-label="Visibilidade da moldura"
+            className="flex flex-col gap-2"
           >
-            {galleryStatus === "posted" ? (
-              <>
-                <Check size={16} strokeWidth={2.5} className="text-brand" />
-                Postado na galeria!
-              </>
-            ) : (
-              <>
-                <Images size={16} strokeWidth={1.75} />
-                {galleryStatus === "posting" ? "Postando..." : "Postar na galeria"}
-              </>
-            )}
-          </button>
-          {galleryStatus === "error" && (
+            {[
+              {
+                value: "public" as const,
+                icon: Globe,
+                label: "Público",
+                description:
+                  "Qualquer visitante vê ela na galeria do candidato.",
+              },
+              {
+                value: "private" as const,
+                icon: Lock,
+                label: "Privado",
+                description: "Só você vê ela na sua galeria.",
+              },
+            ].map(({ value, icon: Icon, label, description }) => {
+              const selected = visibility === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => handleSetVisibility(value)}
+                  disabled={isToggling}
+                  className={`flex items-start gap-3 rounded-2xl border p-4 text-left transition disabled:opacity-50 ${
+                    selected
+                      ? "border-brand bg-brand/10"
+                      : "border-white/10 bg-white/5 hover:bg-white/[0.07]"
+                  }`}
+                >
+                  <span
+                    aria-hidden
+                    className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                      selected ? "border-brand" : "border-white/30"
+                    }`}
+                  >
+                    {selected && (
+                      <span className="h-2.5 w-2.5 rounded-full bg-brand" />
+                    )}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-1.5 text-sm font-bold text-white">
+                      <Icon size={14} strokeWidth={2} />
+                      {label}
+                    </span>
+                    <span className="mt-0.5 block text-xs leading-snug text-white/50">
+                      {description}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {visibilityError && (
             <p className="mt-2 text-center text-xs text-red-400" role="alert">
-              {galleryError}
+              {visibilityError}
             </p>
           )}
 
-          {previewPhotos.length > 0 && (
+          {/* Só faz sentido mostrar "quem já compartilhou" quando a própria
+              moldura está pública — com "Privada" selecionada, a pessoa não
+              faz parte dessa vitrine, então nem convém apontar pra ela. */}
+          {visibility === "public" && previewPhotos.length > 0 && (
             <div className="mt-5">
               <p className="mb-2 text-center text-xs text-white/50">
                 Quem já compartilhou
@@ -294,16 +356,24 @@ ${SITE_URL}/presidenciaveis/${candidateSlug}`;
                     key={photo.imageUrl + i}
                     className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full ring-2 ring-[#1c1c1c]"
                   >
-                    <Image src={photo.imageUrl} alt="" fill sizes="44px" className="object-cover" />
+                    <Image
+                      src={photo.imageUrl}
+                      alt=""
+                      fill
+                      sizes="44px"
+                      className="object-cover"
+                    />
                   </div>
                 ))}
               </div>
-              <Link
-                href={`/presidenciaveis/${candidateSlug}`}
-                className="mt-3 block text-center text-xs font-medium text-brand-light underline decoration-brand/40 underline-offset-2"
+              <button
+                type="button"
+                onClick={handleOpenGallery}
+                className="mx-auto mt-3 flex items-center gap-1 text-xs font-medium text-brand-light underline decoration-brand/40 underline-offset-2"
               >
+                <Images size={12} strokeWidth={2} />
                 Ver galeria completa
-              </Link>
+              </button>
             </div>
           )}
         </div>
@@ -338,6 +408,15 @@ ${SITE_URL}/presidenciaveis/${candidateSlug}`;
           </button>
         </div>
       </div>
+
+      {isGalleryOpen && (
+        <GalleryFeedModal
+          candidateSlug={candidateSlug}
+          initialItems={galleryItems}
+          isLoggedIn
+          onClose={() => setIsGalleryOpen(false)}
+        />
+      )}
     </div>
   );
 }

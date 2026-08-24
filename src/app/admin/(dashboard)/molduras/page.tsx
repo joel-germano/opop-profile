@@ -2,12 +2,44 @@ import { connectDB } from "@/lib/db";
 import { UserModel } from "@/lib/models/user";
 import { TemplateModel } from "@/lib/models/template";
 import { AdminTemplateRow } from "@/components/AdminTemplateRow";
+import { AdminPagination } from "@/components/AdminPagination";
+import { parsePage, totalPagesFor } from "@/lib/admin-pagination";
 
-export default async function AdminMoldurasPage() {
+// Menor que ADMIN_PAGE_SIZE porque cada "linha" aqui é uma conta inteira com
+// várias miniaturas — 20 contas por página deixaria a lista enorme.
+const USERS_PER_PAGE = 8;
+
+export default async function AdminMoldurasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page: pageParam } = await searchParams;
+  const page = parsePage(pageParam);
+
   await connectDB();
 
-  const users = await UserModel.find({}).select("name username").sort({ name: 1 }).lean();
-  const templates = await TemplateModel.find({}).sort({ createdAt: 1 }).lean();
+  // Só pagina as CONTAS que têm moldura (não a lista de moldura em si) —
+  // assim o agrupamento por dono não quebra entre páginas.
+  const [templateCount, userIdsWithTemplates] = await Promise.all([
+    TemplateModel.countDocuments({}),
+    TemplateModel.distinct("userId"),
+  ]);
+  const total = userIdsWithTemplates.length;
+  const totalPages = totalPagesFor(total, USERS_PER_PAGE);
+
+  const users = await UserModel.find({ _id: { $in: userIdsWithTemplates } })
+    .select("name username")
+    .sort({ name: 1 })
+    .skip((page - 1) * USERS_PER_PAGE)
+    .limit(USERS_PER_PAGE)
+    .lean();
+
+  const templates = await TemplateModel.find({
+    userId: { $in: users.map((u) => u._id) },
+  })
+    .sort({ createdAt: 1 })
+    .lean();
 
   const templatesByUser = new Map<string, typeof templates>();
   for (const template of templates) {
@@ -22,7 +54,7 @@ export default async function AdminMoldurasPage() {
           Molduras
         </h1>
         <p className="mt-1 text-sm text-white/60">
-          {templates.length} moldura(s) em {templatesByUser.size} conta(s).
+          {templateCount} moldura(s) em {total} conta(s).
         </p>
       </div>
 
@@ -49,9 +81,11 @@ export default async function AdminMoldurasPage() {
         );
       })}
 
-      {templates.length === 0 && (
+      {total === 0 && (
         <p className="text-sm text-white/50">Nenhuma moldura enviada ainda.</p>
       )}
+
+      <AdminPagination page={page} totalPages={totalPages} basePath="/admin/molduras" />
     </div>
   );
 }

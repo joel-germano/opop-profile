@@ -4,22 +4,37 @@ import { Pencil, Trash2 } from "lucide-react";
 import { connectDB } from "@/lib/db";
 import { UserModel } from "@/lib/models/user";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
+import { AdminPagination } from "@/components/AdminPagination";
+import { ADMIN_PAGE_SIZE, parsePage, totalPagesFor } from "@/lib/admin-pagination";
 import { deleteUserAction } from "./actions";
 
-export default async function AdminCandidatosPage() {
+export default async function AdminCriadoresPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page: pageParam } = await searchParams;
+  const page = parsePage(pageParam);
+
   await connectDB();
-  const users = await UserModel.find({})
-    .select("name username email whatsapp photoUrl plan createdAt")
-    .sort({ createdAt: -1 })
-    .lean();
+  const [total, users] = await Promise.all([
+    UserModel.countDocuments({}),
+    UserModel.find({})
+      .select("name username email whatsapp photoUrl plan createdAt")
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * ADMIN_PAGE_SIZE)
+      .limit(ADMIN_PAGE_SIZE)
+      .lean(),
+  ]);
+  const totalPages = totalPagesFor(total);
 
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-white">
-          Candidatos
+          Criadores
         </h1>
-        <p className="mt-1 text-sm text-white/60">{users.length} conta(s).</p>
+        <p className="mt-1 text-sm text-white/60">{total} conta(s).</p>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -53,8 +68,8 @@ export default async function AdminCandidatosPage() {
 
             <div className="flex shrink-0 gap-2">
               <Link
-                href={`/admin/candidatos/${user._id}`}
-                aria-label="Editar candidato"
+                href={`/admin/criadores/${user._id}`}
+                aria-label="Editar criador"
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition active:scale-90 hover:bg-white/20"
               >
                 <Pencil size={15} strokeWidth={1.75} />
@@ -62,7 +77,7 @@ export default async function AdminCandidatosPage() {
               <form action={deleteUserAction.bind(null, String(user._id))}>
                 <ConfirmSubmitButton
                   confirmMessage={`Excluir ${user.name}? Isso também apaga as molduras e a foto de perfil dele(a).`}
-                  ariaLabel="Excluir candidato"
+                  ariaLabel="Excluir criador"
                   className="flex h-9 w-9 items-center justify-center rounded-full bg-red-500/15 text-red-400 transition active:scale-90 hover:bg-red-500/25"
                 >
                   <Trash2 size={15} strokeWidth={1.75} />
@@ -73,9 +88,11 @@ export default async function AdminCandidatosPage() {
         ))}
 
         {users.length === 0 && (
-          <p className="text-sm text-white/50">Nenhum candidato cadastrado ainda.</p>
+          <p className="text-sm text-white/50">Nenhum criador cadastrado ainda.</p>
         )}
       </div>
+
+      <AdminPagination page={page} totalPages={totalPages} basePath="/admin/criadores" />
     </div>
   );
 }

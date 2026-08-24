@@ -1,4 +1,4 @@
-import { BadgeDollarSign, CreditCard, QrCode, Users } from "lucide-react";
+import { BadgeDollarSign, CreditCard, QrCode, User, Users } from "lucide-react";
 import { connectDB } from "@/lib/db";
 import { PaymentModel } from "@/lib/models/payment";
 import { UserModel } from "@/lib/models/user";
@@ -22,9 +22,10 @@ export default async function AdminDashboardPage() {
     .filter((p) => p.method === "credit")
     .reduce((sum, p) => sum + p.amountCents, 0);
 
-  const [totalUsers, premiumUsers, pendingPayments] = await Promise.all([
+  const [totalUsers, premiumUsers, freeUsers, pendingPayments] = await Promise.all([
     UserModel.countDocuments({}),
     UserModel.countDocuments({ plan: "premium" }),
+    UserModel.countDocuments({ plan: "free" }),
     PaymentModel.countDocuments({ status: "pending" }),
   ]);
 
@@ -55,6 +56,12 @@ export default async function AdminDashboardPage() {
       icon: Users,
       sub: `Ticket médio: ${formatBRL(ticketMedio)}`,
     },
+    {
+      label: "Contas Free",
+      value: `${freeUsers}`,
+      icon: User,
+      sub: `${totalUsers} conta${totalUsers === 1 ? "" : "s"} no total`,
+    },
   ];
 
   return (
@@ -68,7 +75,7 @@ export default async function AdminDashboardPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {cards.map(({ label, value, icon: Icon, sub }) => (
           <div key={label} className="rounded-2xl bg-white/5 p-5">
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/15 text-brand-light">

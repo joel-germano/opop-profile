@@ -14,6 +14,11 @@ const candidateSchema = new Schema(
       lowercase: true,
     },
     photoUrl: { type: String, required: true },
+    party: { type: String, trim: true, default: "" },
+    // Cor de marca do candidato (hex, ex: "#DC2626") — usada nas bordas,
+    // coroa e destaques do ranking em vez de uma cor genérica fixa. Vazio
+    // cai no fallback definido em candidate-colors.ts.
+    color: { type: String, trim: true, default: "" },
   },
   { timestamps: true }
 );

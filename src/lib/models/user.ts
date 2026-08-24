@@ -36,6 +36,12 @@ const userSchema = new Schema(
     // capa, em vez de cair pra photoUrl (a do cadastro, que pode ser outra).
     coverUrl: { type: String, trim: true, default: "" },
     coverPreviewPhotoUrl: { type: String, trim: true, default: "" },
+    // Contagem de acessos à página pública /username, exibida como prova
+    // social ("N usando essas molduras"). Incrementada a cada carregamento
+    // (não requer login) por um valor aleatório — ver randomVisitIncrement
+    // em src/app/[id]/page.tsx — pra dar sensação de crescimento orgânico
+    // enquanto a audiência real ainda é pequena.
+    visitCount: { type: Number, default: 0 },
     // Opcional: contas criadas via Google podem não ter senha — login só
     // pelo Google até o usuário decidir cadastrar uma (não implementado).
     passwordHash: { type: String },

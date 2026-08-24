@@ -1,11 +1,6 @@
 import Image from "next/image";
 import { BarChart3, Users } from "lucide-react";
-
-// Rostos placeholder (i.pravatar.cc) só pra ilustrar o visual — a home
-// ainda não tem apoiadores reais cadastrados pra mostrar aqui.
-const SUPPORTER_AVATARS = [12, 24, 33, 47, 58, 5, 19, 41, 52, 65].map(
-  (seed) => `https://i.pravatar.cc/80?img=${seed}`
-);
+import { PLACEHOLDER_SUPPORTER_AVATARS } from "@/lib/placeholder-avatars";
 
 export function HomeSocialProof() {
   return (
@@ -22,7 +17,7 @@ export function HomeSocialProof() {
           campanha.
         </p>
         <div className="scrollbar-none mt-4 flex items-center -space-x-3 overflow-x-auto py-1">
-          {SUPPORTER_AVATARS.map((src) => (
+          {PLACEHOLDER_SUPPORTER_AVATARS.map((src) => (
             <div
               key={src}
               className="relative h-10 w-10 flex-none overflow-hidden rounded-full ring-2 ring-[#2A2A2A]"

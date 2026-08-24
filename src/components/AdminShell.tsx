@@ -7,6 +7,7 @@ import {
   Image as ImageIcon,
   LogOut,
   Receipt,
+  Settings,
   UserCheck,
   Users,
   Vote,
@@ -15,11 +16,12 @@ import { logoutAdminAction } from "@/app/admin/actions";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Vendas", icon: BadgeDollarSign },
-  { href: "/admin/candidatos", label: "Candidatos", icon: Users },
+  { href: "/admin/criadores", label: "Criadores", icon: Users },
   { href: "/admin/eleitores", label: "Eleitores", icon: UserCheck },
   { href: "/admin/molduras", label: "Molduras", icon: ImageIcon },
   { href: "/admin/pagamentos", label: "Pagamentos", icon: Receipt },
   { href: "/admin/presidenciaveis", label: "Presidenciáveis", icon: Vote },
+  { href: "/admin/configuracoes", label: "Configurações", icon: Settings },
 ];
 
 export function AdminShell({ children }: { children: React.ReactNode }) {

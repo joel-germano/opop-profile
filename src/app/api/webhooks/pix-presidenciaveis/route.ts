@@ -56,9 +56,10 @@ export async function POST(request: Request) {
           status: "paid",
           _id: { $ne: purchase._id },
         });
-        if (!stillPaid) {
-          await SupporterModel.findByIdAndUpdate(purchase.supporterId, { unlocked: false });
-        }
+        await SupporterModel.findByIdAndUpdate(purchase.supporterId, {
+          ...(stillPaid ? {} : { $set: { unlocked: false } }),
+          $inc: { frameCredits: -(purchase.quantity ?? 1) },
+        });
         continue;
       }
 
@@ -68,8 +69,8 @@ export async function POST(request: Request) {
       purchase.paidAt = new Date();
       await purchase.save();
       await SupporterModel.findByIdAndUpdate(purchase.supporterId, {
-        unlocked: true,
-        unlockedAt: new Date(),
+        $set: { unlocked: true, unlockedAt: new Date() },
+        $inc: { frameCredits: purchase.quantity ?? 1 },
       });
     }
 

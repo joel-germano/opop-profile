@@ -9,15 +9,27 @@ const galleryPostSchema = new Schema(
     candidateSlug: { type: String, required: true, index: true },
     supporterId: { type: Schema.Types.ObjectId, ref: "Supporter" },
     imageUrl: { type: String, required: true },
+    // Toda moldura gerada cria um post automaticamente (ver
+    // generateFrameAction) — "private" é o padrão porque nem toda foto real
+    // deveria ficar pública sem a pessoa escolher. Só "public" aparece na
+    // galeria/carrossel do candidato (GalleryFeedModal, GalleryPreviewCarousel);
+    // "private" só aparece na própria "Minha Galeria" do supporter dono.
+    // O ranking/placar do candidato conta os dois — ver comentário em
+    // getInviteSummary sobre "cada moldura gerada conta, pública ou não".
+    visibility: { type: String, enum: ["private", "public"], default: "private" },
   },
   { timestamps: true }
 );
 
-// Um apoiador só pode ter uma foto na galeria de um mesmo candidato — reforçado
-// em postToGalleryAction (findOne antes do create). Sem índice único aqui: já
-// existem posts reais de antes desse campo existir, sem supporterId, e vários
-// deles colidem num índice único (mesmo com sparse) por terem o campo ausente
-// no mesmo candidato.
+// Gráfico de evolução (ver PresidenciaveisTrendChart) agrega posts por dia
+// dentro de uma janela — sem índice em createdAt esse $match viraria uma
+// varredura da coleção inteira a cada carregamento da página.
+galleryPostSchema.index({ createdAt: -1 });
+
+// Índice usado pela galeria pública por candidato (visibility + candidateSlug)
+// e pela "Minha Galeria" (supporterId, todas as visibilidades).
+galleryPostSchema.index({ candidateSlug: 1, visibility: 1, createdAt: -1 });
+galleryPostSchema.index({ supporterId: 1, createdAt: -1 });
 
 export type GalleryPost = InferSchemaType<typeof galleryPostSchema> & { _id: string };
 

@@ -3,15 +3,40 @@ import { connectDB } from "@/lib/db";
 import { SupporterModel } from "@/lib/models/supporter";
 import { SupporterPurchaseModel } from "@/lib/models/supporter-purchase";
 import { ConfirmSubmitButton } from "@/components/ConfirmSubmitButton";
+import { AdminPagination } from "@/components/AdminPagination";
+import { ADMIN_PAGE_SIZE, parsePage, totalPagesFor } from "@/lib/admin-pagination";
 import { deleteSupporterAction } from "./actions";
 
 const METHOD_LABELS: Record<string, string> = { pix: "Pix", credit: "Cartão" };
 
-export default async function AdminEleitoresPage() {
+export default async function AdminEleitoresPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page: pageParam } = await searchParams;
+  const page = parsePage(pageParam);
+
   await connectDB();
 
-  const supporters = await SupporterModel.find({}).sort({ createdAt: -1 }).lean();
-  const purchases = await SupporterPurchaseModel.find({ status: "paid" })
+  const [total, paidCount, supporters] = await Promise.all([
+    SupporterModel.countDocuments({}),
+    SupporterModel.countDocuments({ unlocked: true }),
+    SupporterModel.find({})
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * ADMIN_PAGE_SIZE)
+      .limit(ADMIN_PAGE_SIZE)
+      .lean(),
+  ]);
+  const totalPages = totalPagesFor(total);
+
+  // Compra mais recente só de quem está nesta página — evita carregar a
+  // coleção de compras inteira pra montar 20 linhas.
+  const supporterIds = supporters.map((s) => s._id);
+  const purchases = await SupporterPurchaseModel.find({
+    supporterId: { $in: supporterIds },
+    status: "paid",
+  })
     .sort({ paidAt: -1 })
     .lean();
 
@@ -21,8 +46,6 @@ export default async function AdminEleitoresPage() {
     if (!paidPurchaseBySupporter.has(key)) paidPurchaseBySupporter.set(key, purchase);
   }
 
-  const paidCount = supporters.filter((s) => s.unlocked).length;
-
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -30,7 +53,7 @@ export default async function AdminEleitoresPage() {
           Eleitores
         </h1>
         <p className="mt-1 text-sm text-white/60">
-          {supporters.length} eleitor(es) · {paidCount} pagou(ram)
+          {total} eleitor(es) · {paidCount} pagou(ram)
         </p>
       </div>
 
@@ -85,6 +108,8 @@ export default async function AdminEleitoresPage() {
           <p className="text-sm text-white/50">Nenhum eleitor ainda.</p>
         )}
       </div>
+
+      <AdminPagination page={page} totalPages={totalPages} basePath="/admin/eleitores" />
     </div>
   );
 }

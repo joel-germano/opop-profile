@@ -56,6 +56,25 @@ export function AdminCandidateCreateForm() {
       </label>
 
       <label className="flex flex-col gap-1.5 text-sm text-white/60">
+        Partido
+        <input
+          name="party"
+          placeholder="ex: PT"
+          className="rounded-xl bg-white/10 px-4 py-3 text-base text-white placeholder:text-white/30 focus:outline-none"
+        />
+      </label>
+
+      <label className="flex items-center gap-3 text-sm text-white/60">
+        <input
+          type="color"
+          name="color"
+          defaultValue="#47C1F1"
+          className="h-11 w-14 shrink-0 cursor-pointer rounded-lg border-0 bg-white/10 p-1"
+        />
+        Cor do candidato (usada no ranking)
+      </label>
+
+      <label className="flex flex-col gap-1.5 text-sm text-white/60">
         Slug (opcional — gerado do nome se deixar em branco)
         <input
           name="slug"

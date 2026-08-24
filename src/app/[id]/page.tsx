@@ -39,6 +39,12 @@ export async function generateMetadata({
   };
 }
 
+// Soma aleatória (3 a 7) aplicada ao contador de visitas a cada carregamento
+// da página pública — ver visitCount no schema de User.
+function randomVisitIncrement() {
+  return 3 + Math.floor(Math.random() * 5);
+}
+
 export default async function CampaignPage({
   params,
 }: {
@@ -48,8 +54,12 @@ export default async function CampaignPage({
 
   await connectDB();
   const [user, viewer] = await Promise.all([
-    UserModel.findOne({ username: id.toLowerCase() }).select(
-      "name username photoUrl title description caption coverUrl"
+    UserModel.findOneAndUpdate(
+      { username: id.toLowerCase() },
+      { $inc: { visitCount: randomVisitIncrement() } },
+      { new: true }
+    ).select(
+      "name username photoUrl title description caption coverUrl visitCount"
     ),
     getCurrentUser(),
   ]);
@@ -76,6 +86,7 @@ export default async function CampaignPage({
         description: user.description,
         caption: user.caption || DEFAULT_CAPTION,
         coverUrl: user.coverUrl,
+        visitCount: user.visitCount,
       }}
       isViewerLoggedIn={Boolean(viewer)}
       viewerName={viewer?.name}

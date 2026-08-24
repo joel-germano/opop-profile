@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Check, Sparkles } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
-import { PREMIUM_PRICE_CENTS, TEMPLATE_LIMITS } from "@/lib/plans";
+import { TEMPLATE_LIMITS } from "@/lib/plans";
+import { getPremiumPriceCents } from "@/lib/premium-price";
 import { CheckoutForm } from "@/components/CheckoutForm";
 import { BackButton } from "@/components/BackButton";
 import { formatBrl } from "@/lib/card-format";
@@ -44,6 +45,7 @@ export default async function CheckoutPage() {
   }
 
   const efiEnvironment = process.env.GN_ENDPOINT?.includes("-h.") ? "sandbox" : "production";
+  const premiumPriceCents = await getPremiumPriceCents();
 
   return (
     <div className="flex flex-col gap-6">
@@ -68,7 +70,7 @@ export default async function CheckoutPage() {
         </div>
         <div className="shrink-0 text-right">
           <p className="text-base font-bold text-white">
-            R$ {formatBrl(PREMIUM_PRICE_CENTS)}
+            R$ {formatBrl(premiumPriceCents)}
           </p>
           <p className="text-xs text-white/40">/mês</p>
         </div>
@@ -77,7 +79,7 @@ export default async function CheckoutPage() {
       <CheckoutForm
         gnClientId={process.env.GN_ACCOUNT_ID ?? ""}
         efiEnvironment={efiEnvironment}
-        priceCents={PREMIUM_PRICE_CENTS}
+        priceCents={premiumPriceCents}
       />
     </div>
   );

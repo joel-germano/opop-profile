@@ -9,7 +9,7 @@ import {
   chargeCreditCard,
   PIX_EXPIRATION_SECONDS,
 } from "@/lib/efi";
-import { PREMIUM_PRICE_CENTS } from "@/lib/plans";
+import { getPremiumPriceCents } from "@/lib/premium-price";
 import { mapChargeStatus } from "@/lib/efi-charge-status";
 
 export type PixChargeResult =
@@ -35,15 +35,16 @@ export async function createPixChargeAction(): Promise<PixChargeResult> {
 
   try {
     await connectDB();
+    const premiumPriceCents = await getPremiumPriceCents();
     const charge = await createPixCharge({
-      amountCents: PREMIUM_PRICE_CENTS,
+      amountCents: premiumPriceCents,
       description: "Eu Apoio Premium",
     });
 
     await PaymentModel.create({
       userId: user._id,
       method: "pix",
-      amountCents: PREMIUM_PRICE_CENTS,
+      amountCents: premiumPriceCents,
       status: "pending",
       externalId: charge.txid,
       pixCopiaECola: charge.pixCopiaECola,
@@ -90,8 +91,9 @@ export async function chargeCreditCardAction(
 
   try {
     await connectDB();
+    const premiumPriceCents = await getPremiumPriceCents();
     const charge = await chargeCreditCard({
-      amountCents: PREMIUM_PRICE_CENTS,
+      amountCents: premiumPriceCents,
       description: "Eu Apoio Premium",
       paymentToken,
       customer: {
@@ -107,7 +109,7 @@ export async function chargeCreditCardAction(
     await PaymentModel.create({
       userId: user._id,
       method: "credit",
-      amountCents: PREMIUM_PRICE_CENTS,
+      amountCents: premiumPriceCents,
       status: outcome,
       externalId: charge.chargeId,
       paidAt: outcome === "paid" ? new Date() : undefined,

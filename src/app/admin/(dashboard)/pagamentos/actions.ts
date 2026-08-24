@@ -48,7 +48,21 @@ export async function deletePaymentAction(paymentId: string) {
   if (!(await isAdminAuthenticated())) return;
 
   await connectDB();
-  await PaymentModel.findByIdAndDelete(paymentId);
+  const payment = await PaymentModel.findByIdAndDelete(paymentId);
+  if (!payment) return;
+
+  // Mesma lógica do webhook de estorno: sem isso, apagar o único registro
+  // "paid" de alguém deixava a conta Premium sem nenhum pagamento no banco
+  // que justificasse.
+  if (payment.status === "paid") {
+    const stillPaid = await PaymentModel.exists({
+      userId: payment.userId,
+      status: "paid",
+    });
+    if (!stillPaid) {
+      await UserModel.findByIdAndUpdate(payment.userId, { plan: "free" });
+    }
+  }
 
   revalidatePath("/admin/pagamentos");
 }

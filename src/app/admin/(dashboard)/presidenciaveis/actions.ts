@@ -30,6 +30,8 @@ export async function createCandidateAction(
   if (!(await isAdminAuthenticated())) return { error: "Sessão de admin expirada." };
 
   const name = String(formData.get("name") ?? "").trim();
+  const party = String(formData.get("party") ?? "").trim();
+  const color = String(formData.get("color") ?? "").trim();
   const photoDataUrl = String(formData.get("photoDataUrl") ?? "");
   const rawSlug = String(formData.get("slug") ?? "").trim();
   const slug = slugify(rawSlug || name);
@@ -44,7 +46,7 @@ export async function createCandidateAction(
   let candidateId: string;
   try {
     const photoUrl = await saveAvatarFromDataUrl(photoDataUrl);
-    const candidate = await CandidateModel.create({ name, slug, photoUrl });
+    const candidate = await CandidateModel.create({ name, slug, photoUrl, party, color });
     candidateId = String(candidate._id);
   } catch {
     return { error: "Não foi possível criar o candidato. Tente novamente." };
@@ -62,6 +64,8 @@ export async function updateCandidateAction(
   if (!(await isAdminAuthenticated())) return { error: "Sessão de admin expirada." };
 
   const name = String(formData.get("name") ?? "").trim();
+  const party = String(formData.get("party") ?? "").trim();
+  const color = String(formData.get("color") ?? "").trim();
   const rawSlug = String(formData.get("slug") ?? "").trim();
   const slug = slugify(rawSlug || name);
   const photoDataUrl = String(formData.get("photoDataUrl") ?? "");
@@ -79,6 +83,8 @@ export async function updateCandidateAction(
 
   candidate.name = name;
   candidate.slug = slug;
+  candidate.party = party;
+  candidate.color = color;
 
   try {
     if (photoDataUrl) {

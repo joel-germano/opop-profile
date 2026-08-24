@@ -8,6 +8,9 @@ const supporterPurchaseSchema = new Schema(
     supporterId: { type: Schema.Types.ObjectId, ref: "Supporter", required: true },
     method: { type: String, enum: ["pix", "credit"], required: true },
     amountCents: { type: Number, required: true },
+    // Quantas molduras essa compra vale (preço unitário × quantity =
+    // amountCents) — é o que credita em Supporter.frameCredits quando paga.
+    quantity: { type: Number, default: 1, min: 1 },
     status: {
       type: String,
       enum: ["pending", "paid", "refunded", "failed"],

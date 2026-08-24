@@ -1,19 +1,29 @@
 "use server";
 
 import bcrypt from "bcryptjs";
+import { Types } from "mongoose";
 import { connectDB } from "@/lib/db";
 import { SupporterModel } from "@/lib/models/supporter";
 import { SupporterPurchaseModel } from "@/lib/models/supporter-purchase";
-import { createSupporterSession, getCurrentSupporter } from "@/lib/supporter-auth";
+import {
+  createSupporterSession,
+  destroySupporterSession,
+  getCurrentSupporter,
+} from "@/lib/supporter-auth";
 import { verifyGoogleIdToken } from "@/lib/google-verify";
 import {
   createPixChargePresidenciaveis,
   chargeCreditCardPresidenciaveis,
 } from "@/lib/efi-presidenciaveis";
-import { PRESIDENCIAVEIS_PRICE_CENTS } from "@/lib/presidenciaveis-constants";
 import { mapChargeStatus } from "@/lib/efi-charge-status";
+import { getPresidenciaveisPriceCents } from "@/lib/premium-price";
 import { GalleryPostModel } from "@/lib/models/gallery-post";
-import { saveGalleryPhotoFromDataUrl } from "@/lib/save-gallery-photo";
+import { GALLERY_FEED_PAGE_SIZE, MAX_FRAME_QUANTITY } from "@/lib/presidenciaveis-constants";
+
+function clampQuantity(raw: number): number {
+  if (!Number.isFinite(raw)) return 1;
+  return Math.min(MAX_FRAME_QUANTITY, Math.max(1, Math.floor(raw)));
+}
 
 export type IdentifyState = { error: string } | { ok: true; unlocked: boolean } | null;
 
@@ -73,31 +83,44 @@ export async function loginWithGoogleAction(idToken: string): Promise<IdentifySt
   return { ok: true, unlocked: supporter.unlocked ?? false };
 }
 
+export async function logoutSupporterAction() {
+  await destroySupporterSession();
+}
+
 export type PixChargeResult =
   | { ok: true; txid: string; pixCopiaECola: string; qrCodeImage: string }
   | { ok: false; error: string };
 
-export async function createSupporterPixChargeAction(): Promise<PixChargeResult> {
+export async function createSupporterPixChargeAction(
+  quantity: number = 1
+): Promise<PixChargeResult> {
   const supporter = await getCurrentSupporter();
   if (!supporter) return { ok: false, error: "Sessão expirada, identifique-se novamente." };
 
-  // Trava contra cobrança duplicada (mesma do checkout Premium): quem já
-  // desbloqueou não tem o que pagar de novo.
-  if (supporter.unlocked) {
-    return { ok: false, error: "Seu acesso já está liberado — nada a pagar." };
-  }
+  // Sem trava de "já desbloqueou": diferente do Premium, aqui uma pessoa já
+  // liberada pode comprar de novo pra ter mais convites pra presentear (ver
+  // GiftInviteModal → "Comprar mais convites"). Cada compra soma em
+  // frameCredits, nunca substitui.
+
+  const safeQuantity = clampQuantity(quantity);
 
   try {
     await connectDB();
+    const unitPriceCents = await getPresidenciaveisPriceCents();
+    const amountCents = unitPriceCents * safeQuantity;
     const charge = await createPixChargePresidenciaveis({
-      amountCents: PRESIDENCIAVEIS_PRICE_CENTS,
-      description: "Eu Apoio — desbloqueio presidenciáveis",
+      amountCents,
+      description:
+        safeQuantity === 1
+          ? "Eu Apoio — desbloqueio presidenciáveis"
+          : `Eu Apoio — desbloqueio presidenciáveis (${safeQuantity} molduras)`,
     });
 
     await SupporterPurchaseModel.create({
       supporterId: supporter._id,
       method: "pix",
-      amountCents: PRESIDENCIAVEIS_PRICE_CENTS,
+      amountCents,
+      quantity: safeQuantity,
       status: "pending",
       externalId: charge.txid,
       pixCopiaECola: charge.pixCopiaECola,
@@ -124,15 +147,14 @@ export async function chargeSupporterCreditCardAction(
   const supporter = await getCurrentSupporter();
   if (!supporter) return { error: "Sessão expirada, identifique-se novamente." };
 
-  // Mesma trava do Pix — no cartão é ainda mais crítica: cobra na hora.
-  if (supporter.unlocked) {
-    return { error: "Seu acesso já está liberado — nada a pagar." };
-  }
+  // Sem trava de "já desbloqueou" — ver comentário equivalente em
+  // createSupporterPixChargeAction.
 
   const paymentToken = String(formData.get("paymentToken") ?? "");
   const cardName = String(formData.get("cardName") ?? "").trim();
   const cpf = String(formData.get("cpf") ?? "").trim();
   const phoneNumber = String(formData.get("phoneNumber") ?? "").trim();
+  const quantity = clampQuantity(Number(formData.get("quantity") ?? 1));
 
   if (!paymentToken) return { error: "Não foi possível validar o cartão. Tente novamente." };
   if (!cardName || !cpf || !phoneNumber) {
@@ -141,9 +163,14 @@ export async function chargeSupporterCreditCardAction(
 
   try {
     await connectDB();
+    const unitPriceCents = await getPresidenciaveisPriceCents();
+    const amountCents = unitPriceCents * quantity;
     const charge = await chargeCreditCardPresidenciaveis({
-      amountCents: PRESIDENCIAVEIS_PRICE_CENTS,
-      description: "Eu Apoio — desbloqueio presidenciáveis",
+      amountCents,
+      description:
+        quantity === 1
+          ? "Eu Apoio — desbloqueio presidenciáveis"
+          : `Eu Apoio — desbloqueio presidenciáveis (${quantity} molduras)`,
       paymentToken,
       customer: { name: cardName, cpf, email: supporter.email, phoneNumber },
     });
@@ -153,7 +180,8 @@ export async function chargeSupporterCreditCardAction(
     await SupporterPurchaseModel.create({
       supporterId: supporter._id,
       method: "credit",
-      amountCents: PRESIDENCIAVEIS_PRICE_CENTS,
+      amountCents,
+      quantity,
       status: outcome,
       externalId: charge.chargeId,
       paidAt: outcome === "paid" ? new Date() : undefined,
@@ -175,8 +203,8 @@ export async function chargeSupporterCreditCardAction(
     }
 
     await SupporterModel.findByIdAndUpdate(supporter._id, {
-      unlocked: true,
-      unlockedAt: new Date(),
+      $set: { unlocked: true, unlockedAt: new Date() },
+      $inc: { frameCredits: quantity },
     });
 
     return { success: true };
@@ -186,63 +214,77 @@ export async function chargeSupporterCreditCardAction(
   }
 }
 
-export type GalleryPostState = { error: string } | { success: true } | null;
-
-export async function postToGalleryAction(
-  candidateSlug: string,
-  formData: FormData
-): Promise<GalleryPostState> {
-  const supporter = await getCurrentSupporter();
-  if (!supporter?.unlocked) return { error: "É preciso desbloquear antes de postar." };
-
-  const imageDataUrl = String(formData.get("imageDataUrl") ?? "");
-  if (!imageDataUrl) return { error: "Nenhuma imagem pra postar." };
-
-  await connectDB();
-
-  // Reforçado aqui e também pelo índice único no schema (candidateSlug +
-  // supporterId) — um apoiador só pode ter uma foto por candidato na galeria.
-  const existing = await GalleryPostModel.findOne({
-    candidateSlug,
-    supporterId: supporter._id,
-  }).select("_id");
-  if (existing) {
-    return { error: "Você já postou uma foto na galeria desse candidato." };
-  }
-
-  try {
-    const imageUrl = await saveGalleryPhotoFromDataUrl(imageDataUrl);
-    await GalleryPostModel.create({ candidateSlug, supporterId: supporter._id, imageUrl });
-    return { success: true };
-  } catch (err) {
-    if (err instanceof Error && "code" in err && err.code === 11000) {
-      return { error: "Você já postou uma foto na galeria desse candidato." };
-    }
-    console.error("[postToGalleryAction]", err);
-    return { error: "Não foi possível postar na galeria. Tente novamente." };
-  }
-}
-
-export async function hasPostedToGalleryAction(candidateSlug: string): Promise<boolean> {
-  const supporter = await getCurrentSupporter();
-  if (!supporter) return false;
-
-  await connectDB();
-  const existing = await GalleryPostModel.findOne({
-    candidateSlug,
-    supporterId: supporter._id,
-  }).select("_id");
-  return Boolean(existing);
-}
+// "Postar na galeria" não existe mais como passo manual — toda geração já
+// salva automaticamente (ver generateFrameAction em invite-actions.ts), como
+// "private" por padrão. O que resta aqui é só a leitura das vitrines
+// PÚBLICAS, sempre filtrada por `visibility: "public"` — sem esse filtro,
+// fotos privadas vazariam pra galeria de qualquer visitante.
 
 export async function getGalleryPreviewAction(
   candidateSlug: string
 ): Promise<{ imageUrl: string }[]> {
   await connectDB();
-  const posts = await GalleryPostModel.find({ candidateSlug })
+  const posts = await GalleryPostModel.find({ candidateSlug, visibility: "public" })
     .sort({ createdAt: -1 })
     .limit(5)
     .select("imageUrl")
     .lean();
   return posts.map((p) => ({ imageUrl: p.imageUrl }));
+}
+
+// `visibility` opcional: só vem preenchido no filtro "só as minhas" (ver
+// onlyMine abaixo), pra mostrar o selo pública/privada — na vitrine pública
+// normal é sempre "public" por construção do query, não vale o round-trip.
+export type GalleryFeedItem = {
+  id: string;
+  imageUrl: string;
+  visibility?: "private" | "public";
+};
+export type GalleryFeedPage = { items: GalleryFeedItem[]; nextCursor: string | null };
+
+// Paginação por cursor de _id (não skip/limit): cada página pede só "o que
+// vem depois do último _id que eu já vi". Isso mantém a query com custo
+// proporcional ao tamanho da página, não ao número de posts já vistos — um
+// skip(1000000) obrigaria o Mongo a varrer e descartar 1 milhão de docs a
+// cada carregamento. _id do Mongo já é crescente por criação, então ordenar
+// por ele é equivalente a ordenar por "mais novo primeiro" e usa o índice
+// padrão (_id), sem precisar de índice composto extra.
+export async function getGalleryFeedAction(
+  candidateSlug: string,
+  cursor?: string | null,
+  // Filtro "só as minhas" dentro da vitrine pública: sai do padrão
+  // `visibility: "public"` pra `supporterId` do dono da sessão — seguro
+  // porque o id vem da sessão (não de input do cliente), então só mostra o
+  // que é da própria pessoa (pública OU privada), nunca de outro visitante.
+  onlyMine?: boolean
+): Promise<GalleryFeedPage> {
+  await connectDB();
+
+  const query: Record<string, unknown> = { candidateSlug };
+  if (onlyMine) {
+    const supporter = await getCurrentSupporter();
+    if (!supporter) return { items: [], nextCursor: null };
+    query.supporterId = supporter._id;
+  } else {
+    query.visibility = "public";
+  }
+  if (cursor && Types.ObjectId.isValid(cursor)) {
+    query._id = { $lt: new Types.ObjectId(cursor) };
+  }
+
+  const docs = await GalleryPostModel.find(query)
+    .sort({ _id: -1 })
+    .limit(GALLERY_FEED_PAGE_SIZE)
+    .select(onlyMine ? "imageUrl visibility" : "imageUrl")
+    .lean();
+
+  const items = docs.map((d) => ({
+    id: String(d._id),
+    imageUrl: d.imageUrl,
+    ...(onlyMine ? { visibility: d.visibility as "private" | "public" } : {}),
+  }));
+  const nextCursor =
+    items.length === GALLERY_FEED_PAGE_SIZE ? items[items.length - 1].id : null;
+
+  return { items, nextCursor };
 }

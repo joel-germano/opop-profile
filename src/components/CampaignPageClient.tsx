@@ -3,12 +3,13 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Camera, Pencil, Menu, Share2 } from "lucide-react";
+import { Camera, Pencil, Menu, Share2, Users } from "lucide-react";
 import { TemplateCarousel3D } from "@/components/TemplateCarousel3D";
 import { PhotoEditorModal } from "@/components/PhotoEditorModal";
 import { CampaignMenuModal } from "@/components/CampaignMenuModal";
 import { CampaignShareModal } from "@/components/CampaignShareModal";
 import { SITE_URL } from "@/lib/site";
+import { formatCompactNumber } from "@/lib/format";
 import type { Template } from "@/lib/templates";
 
 type CampaignUser = {
@@ -19,6 +20,7 @@ type CampaignUser = {
   description: string;
   caption: string;
   coverUrl?: string;
+  visitCount: number;
 };
 
 export function CampaignPageClient({
@@ -101,6 +103,16 @@ export function CampaignPageClient({
                 {user.description}
               </p>
             )}
+
+            <div className="mt-4 flex items-center justify-center gap-1.5 rounded-full border border-white/15 px-3 py-2 text-xs font-medium text-white w-fit mx-auto">
+              <Users size={14} strokeWidth={2} />
+              <span>
+                <strong className="font-bold">
+                  {formatCompactNumber(user.visitCount)}
+                </strong>{" "}
+                apoiadores com essa moldura
+              </span>
+            </div>
 
             {isViewerLoggedIn && (
               <Link

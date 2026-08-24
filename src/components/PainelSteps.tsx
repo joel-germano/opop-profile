@@ -65,7 +65,7 @@ export function PainelSteps({
   // porque quem publica é este componente — e publicar gera a capa a partir
   // dela (ver handleNext).
   const [previewAvatar, setPreviewAvatar] = useState(
-    previewPhotoUrl || PREVIEW_AVATARS[0]
+    previewPhotoUrl || PREVIEW_AVATARS[0],
   );
   const router = useRouter();
 
@@ -124,7 +124,10 @@ export function PainelSteps({
     const moldura = templates[0]?.imageUrl;
     if (moldura) {
       try {
-        const coverDataUrl = await compositeCoverDataUrl(previewAvatar, moldura);
+        const coverDataUrl = await compositeCoverDataUrl(
+          previewAvatar,
+          moldura,
+        );
         await saveCoverAction(coverDataUrl, previewAvatar);
       } catch {
         // segue o fluxo — a próxima publicação tenta de novo
@@ -162,7 +165,8 @@ export function PainelSteps({
               onSelectStep={setStep}
             />
             <p className="mt-4 text-sm text-white/60">
-              As artes que aparecem na sua página de apoio, em:
+              Adicione quantas molduras quiser, elas aparecem, nesta ordem, na
+              sua página de apoio:
             </p>
             <div className="mt-2 w-fit rounded-full bg-white/5 px-4 py-1 ring-1 ring-white/10">
               <span className="text-sm font-bold text-white/60">
@@ -250,9 +254,7 @@ export function PainelSteps({
       {showLeaveConfirm && (
         <ConfirmLeaveModal
           onStay={() => setShowLeaveConfirm(false)}
-          onLeave={() =>
-            router.push(isLoggedIn ? `/${campaignLink}` : "/")
-          }
+          onLeave={() => router.push(isLoggedIn ? `/${campaignLink}` : "/")}
         />
       )}
     </>

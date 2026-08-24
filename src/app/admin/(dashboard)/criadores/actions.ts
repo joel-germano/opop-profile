@@ -7,6 +7,8 @@ import { UserModel } from "@/lib/models/user";
 import { TemplateModel } from "@/lib/models/template";
 import { deleteAvatar } from "@/lib/save-avatar";
 import { deleteTemplateFile } from "@/lib/save-template";
+import { deletePreviewPhoto } from "@/lib/save-preview-photo";
+import { deleteCover } from "@/lib/save-cover";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 
 export type UpdateUserState = { error: string } | { success: true } | null;
@@ -56,7 +58,7 @@ export async function updateUserAction(
 
   await UserModel.findByIdAndUpdate(userId, update);
 
-  revalidatePath("/admin/candidatos");
+  revalidatePath("/admin/criadores");
   return { success: true };
 }
 
@@ -64,7 +66,7 @@ export async function deleteUserAction(userId: string) {
   if (!(await isAdminAuthenticated())) return;
 
   await connectDB();
-  const user = await UserModel.findById(userId).select("photoUrl");
+  const user = await UserModel.findById(userId).select("photoUrl previewPhotoUrl coverUrl");
   if (!user) return;
 
   const templates = await TemplateModel.find({ userId }).select("imageUrl");
@@ -73,8 +75,10 @@ export async function deleteUserAction(userId: string) {
   }
   await TemplateModel.deleteMany({ userId });
   await deleteAvatar(user.photoUrl);
+  if (user.previewPhotoUrl) await deletePreviewPhoto(user.previewPhotoUrl);
+  if (user.coverUrl) await deleteCover(user.coverUrl);
   await UserModel.findByIdAndDelete(userId);
 
-  revalidatePath("/admin/candidatos");
-  redirect("/admin/candidatos");
+  revalidatePath("/admin/criadores");
+  redirect("/admin/criadores");
 }

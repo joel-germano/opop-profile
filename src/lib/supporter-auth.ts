@@ -30,6 +30,11 @@ export async function createSupporterSession(supporterId: string) {
   });
 }
 
+export async function destroySupporterSession() {
+  const cookieStore = await cookies();
+  cookieStore.delete(SUPPORTER_SESSION_COOKIE);
+}
+
 async function getSupporterIdFromSession(): Promise<string | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SUPPORTER_SESSION_COOKIE)?.value;

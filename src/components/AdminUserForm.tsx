@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
-import { updateUserAction, type UpdateUserState } from "@/app/admin/(dashboard)/candidatos/actions";
+import { updateUserAction, type UpdateUserState } from "@/app/admin/(dashboard)/criadores/actions";
 
 const initialState: UpdateUserState = null;
 
@@ -102,7 +102,7 @@ export function AdminUserForm({
         </button>
         <button
           type="button"
-          onClick={() => router.push("/admin/candidatos")}
+          onClick={() => router.push("/admin/criadores")}
           className="flex h-12 flex-1 items-center justify-center rounded-full bg-white/10 text-sm font-semibold text-white transition active:scale-95 hover:bg-white/20"
         >
           Voltar

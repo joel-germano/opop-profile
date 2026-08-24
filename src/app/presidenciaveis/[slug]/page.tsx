@@ -4,7 +4,9 @@ import { CandidateModel } from "@/lib/models/candidate";
 import { CandidateTemplateModel } from "@/lib/models/candidate-template";
 import { GalleryPostModel } from "@/lib/models/gallery-post";
 import { getCurrentSupporter } from "@/lib/supporter-auth";
-import { GALLERY_PAGE_SIZE } from "@/lib/presidenciaveis-constants";
+import { GALLERY_PREVIEW_SIZE } from "@/lib/presidenciaveis-constants";
+import { getPresidenciaveisPriceCents } from "@/lib/premium-price";
+import { getInviteContext, getInviteSummary } from "@/lib/frame-invites";
 import { PresidentialCandidatePage } from "@/components/PresidentialCandidatePage";
 
 export default async function CandidateDetailPage({
@@ -12,10 +14,10 @@ export default async function CandidateDetailPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ convite?: string }>;
 }) {
   const { slug } = await params;
-  const { page: pageParam } = await searchParams;
+  const { convite } = await searchParams;
 
   await connectDB();
   const candidate = await CandidateModel.findOne({ slug: slug.toLowerCase() }).lean();
@@ -31,33 +33,56 @@ export default async function CandidateDetailPage({
     src: t.imageUrl,
   }));
 
+  // Ranking/placar: conta toda moldura gerada, pública ou privada — é o
+  // "cada compra aumenta o ranking do candidato". Só as vitrines (abaixo)
+  // filtram por visibility: "public"; essa contagem, não.
   const supporterCount = await GalleryPostModel.countDocuments({ candidateSlug: slug });
-  const galleryTotalPages = Math.max(1, Math.ceil(supporterCount / GALLERY_PAGE_SIZE));
-  const galleryPage = Math.min(
-    Math.max(1, parseInt(pageParam ?? "1", 10) || 1),
-    galleryTotalPages
-  );
 
-  const galleryDocs = await GalleryPostModel.find({ candidateSlug: slug })
-    .sort({ createdAt: -1 })
-    .skip((galleryPage - 1) * GALLERY_PAGE_SIZE)
-    .limit(GALLERY_PAGE_SIZE)
+  // Só a prévia (carrossel abaixo do botão "Escolha sua foto"); a galeria
+  // completa carrega no modal, sob demanda, paginada por cursor
+  // (getGalleryFeedAction) — nunca os posts inteiros de uma vez. Filtrado
+  // por "public": é vitrine visível pra qualquer visitante, moldura privada
+  // não pode aparecer aqui.
+  const previewDocs = await GalleryPostModel.find({ candidateSlug: slug, visibility: "public" })
+    .sort({ _id: -1 })
+    .limit(GALLERY_PREVIEW_SIZE)
     .select("imageUrl")
     .lean();
 
   const supporter = await getCurrentSupporter();
+  const priceCents = await getPresidenciaveisPriceCents();
+  const supporterShareCount = supporter
+    ? await GalleryPostModel.countDocuments({ supporterId: supporter._id })
+    : 0;
+
+  // Convite só é considerado se ainda estiver pendente e for desse candidato
+  // — link já usado (ou de outro candidato) cai fora aqui e a página se
+  // comporta como uma visita normal.
+  const invite = await getInviteContext(convite, slug);
+
+  // Saldo de convites de quem já comprou — alimenta o GiftInviteCard.
+  const inviteSummary = supporter
+    ? await getInviteSummary(
+        String(supporter._id),
+        supporter.frameCredits ?? 0,
+        supporter.reservedForGifts ?? 0
+      )
+    : null;
 
   return (
     <PresidentialCandidatePage
       candidate={{ name: candidate.name, photoUrl: candidate.photoUrl, slug: candidate.slug }}
       templates={templates}
-      initialUnlocked={supporter?.unlocked ?? false}
+      initialFrameCredits={supporter?.frameCredits ?? 0}
       gnClientId={process.env.GN_ACCOUNT_ID ?? ""}
       googleClientId={process.env.GOOGLE_CLIENT_ID ?? ""}
-      galleryPosts={galleryDocs.map((p) => ({ id: String(p._id), imageUrl: p.imageUrl }))}
+      galleryPreview={previewDocs.map((p) => ({ id: String(p._id), imageUrl: p.imageUrl }))}
       supporterCount={supporterCount}
-      galleryPage={galleryPage}
-      galleryTotalPages={galleryTotalPages}
+      priceCents={priceCents}
+      supporter={supporter ? { name: supporter.name ?? null, email: supporter.email } : null}
+      supporterShareCount={supporterShareCount}
+      invite={invite}
+      inviteSummary={inviteSummary}
     />
   );
 }

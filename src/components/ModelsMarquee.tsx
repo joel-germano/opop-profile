@@ -21,9 +21,18 @@ const COLUMNS = Array.from({ length: COLUMN_COUNT }, (_, colIndex) => {
   };
 });
 
-export function HomeModelsMarquee() {
+// Usado na home (fundo coral) e na hero dos presidenciáveis (fundo azul) —
+// por isso o tamanho/sangria e a cor do degradê que apaga as bordas entram
+// por prop, em vez de ficarem fixos numa das duas telas.
+export function ModelsMarquee({
+  className = "-mx-6 -mt-4 h-80 w-[calc(100%+3rem)]",
+  fadeClassName = "bg-linear-to-b from-decor-coral to-transparent to-40%",
+}: {
+  className?: string;
+  fadeClassName?: string;
+}) {
   return (
-    <div className="relative -mx-6 -mt-4 h-80 w-[calc(100%+3rem)] overflow-hidden">
+    <div className={`relative overflow-hidden ${className}`}>
       <div className="absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 rotate-[-30deg] gap-3">
         {COLUMNS.map((column, colIndex) => (
           <div
@@ -56,7 +65,7 @@ export function HomeModelsMarquee() {
         ))}
       </div>
 
-      <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-decor-coral to-transparent to-40%" />
+      <div className={`pointer-events-none absolute inset-0 ${fadeClassName}`} />
     </div>
   );
 }

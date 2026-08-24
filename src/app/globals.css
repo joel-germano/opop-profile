@@ -31,6 +31,10 @@
   --color-danger-dark: #c13202;
   --color-decor-coral: #fca39e;
   --color-decor-lime: #efffaa;
+
+  /* Telas bem estreitas (320/360px). Habilita as variantes `xs:` e
+     `max-xs:` pra casos onde o layout em linha não cabe mais. */
+  --breakpoint-xs: 380px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -161,9 +165,125 @@ a:focus-visible,
   animation: marquee-vertical 26s linear infinite reverse;
 }
 
+/* Marquee horizontal (ver AvatarCarousel.tsx) — mesma técnica: a lista
+   dobrada anda exatamente 50% da própria largura, então o ponto onde ela
+   "recomeça" é indistinguível do resto, sem salto no loop. */
+@keyframes marquee-horizontal {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-left {
+  animation: marquee-horizontal 32s linear infinite;
+}
+
+.animate-marquee-right {
+  animation: marquee-horizontal 32s linear infinite reverse;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee-left,
+  .animate-marquee-right {
+    animation: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee-up,
   .animate-marquee-down {
     animation: none;
+  }
+}
+
+/* Partículas flutuantes sutis (ver FloatingParticles.tsx) — sobem devagar,
+   driftam pro lado via --particle-drift e desaparecem nas pontas, tudo com
+   uma única keyframe reaproveitada por partícula via custom properties. */
+@keyframes particle-float {
+  0% {
+    transform: translate(0, 0) scale(0.5);
+    opacity: 0;
+  }
+  15% {
+    opacity: var(--particle-opacity, 1);
+  }
+  85% {
+    opacity: var(--particle-opacity, 1);
+  }
+  100% {
+    transform: translate(var(--particle-drift, 10px), -56px) scale(1);
+    opacity: 0;
+  }
+}
+
+.animate-particle-float {
+  animation-name: particle-float;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-particle-float {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/* Respiro leve num CTA (ver "Quero minha moldura" na hero dos
+   presidenciáveis) — só um scale sutil + um anel de sombra que pulsa e
+   desaparece, sem opacidade (o `animate-pulse` padrão do Tailwind pisca o
+   botão inteiro, agressivo demais pra algo que já é o elemento mais
+   chamativo da tela). Cor fixa em --color-danger (#ef3e03), a mesma do CTA. */
+@keyframes cta-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 62, 3, 0.35);
+  }
+  50% {
+    transform: scale(1.025);
+    box-shadow: 0 0 0 10px rgba(239, 62, 3, 0);
+  }
+}
+
+.animate-cta-pulse {
+  animation: cta-pulse 2.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-cta-pulse {
+    animation: none;
+  }
+}
+
+/* Efeito radar (ver PresidenciaveisRankHero.tsx) — três anéis idênticos
+   (mesmo elemento, três cópias com animation-delay escalonado via
+   `--radar-delay` inline) crescem do tamanho do círculo até bem maior e
+   somem, saindo em sequência do centro pra fora, feito onda de sonar.
+   Separada de cta-pulse/.animate-cta-pulse de propósito — não toca em nada
+   do CtaButton. */
+@keyframes radar-wave {
+  0% {
+    transform: scale(1);
+    opacity: var(--radar-opacity, 0.55);
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+.animate-radar-wave {
+  animation: radar-wave 2.4s ease-out infinite;
+  animation-delay: var(--radar-delay, 0s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-radar-wave {
+    animation: none;
+    opacity: 0;
   }
 }

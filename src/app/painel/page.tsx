@@ -2,7 +2,8 @@ import { connectDB } from "@/lib/db";
 import { TemplateModel } from "@/lib/models/template";
 import { getCurrentUser } from "@/lib/auth";
 import { getCampaignDraft, getDraftId } from "@/lib/draft";
-import { PAYMENTS_ENABLED, PREMIUM_PRICE_CENTS, TEMPLATE_LIMITS } from "@/lib/plans";
+import { PAYMENTS_ENABLED, TEMPLATE_LIMITS } from "@/lib/plans";
+import { getPremiumPriceCents } from "@/lib/premium-price";
 import { PainelSteps } from "@/components/PainelSteps";
 
 export default async function PainelPage() {
@@ -26,6 +27,7 @@ export default async function PainelPage() {
 
   const plan = (user?.plan as "free" | "premium") ?? "free";
   const limit = PAYMENTS_ENABLED ? TEMPLATE_LIMITS[plan] : Infinity;
+  const premiumPriceCents = await getPremiumPriceCents();
 
   return (
     <PainelSteps
@@ -37,7 +39,7 @@ export default async function PainelPage() {
       previewPhotoUrl={content?.previewPhotoUrl ?? ""}
       templates={templates}
       limit={limit}
-      premiumPriceCents={PREMIUM_PRICE_CENTS}
+      premiumPriceCents={premiumPriceCents}
     />
   );
 }

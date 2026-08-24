@@ -6,7 +6,13 @@ import { HomeShowcaseCard } from "@/components/HomeShowcaseCard";
 
 type Item = { file: string; title: string; supporters: string; src: string };
 
-export function HomeShowcaseCarousel({ items }: { items: Item[] }) {
+export function HomeShowcaseCarousel({
+  items,
+  hideDetails = false,
+}: {
+  items: Item[];
+  hideDetails?: boolean;
+}) {
   const scrollerRef = useRef<HTMLDivElement>(null);
 
   const scrollByCard = (direction: 1 | -1) => {
@@ -25,6 +31,7 @@ export function HomeShowcaseCarousel({ items }: { items: Item[] }) {
             src={item.src}
             title={item.title}
             supporters={item.supporters}
+            hideDetails={hideDetails}
           />
         ))}
       </div>
@@ -33,7 +40,7 @@ export function HomeShowcaseCarousel({ items }: { items: Item[] }) {
         type="button"
         aria-label="Ver anteriores"
         onClick={() => scrollByCard(-1)}
-        className="absolute left-2 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition active:scale-90 hover:bg-white/20 md:flex"
+        className="absolute left-2 top-18 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition active:scale-90 hover:bg-white/20 md:flex"
       >
         <ChevronLeft size={18} strokeWidth={2} />
       </button>
@@ -41,7 +48,7 @@ export function HomeShowcaseCarousel({ items }: { items: Item[] }) {
         type="button"
         aria-label="Ver mais"
         onClick={() => scrollByCard(1)}
-        className="absolute right-2 top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition active:scale-90 hover:bg-white/20 md:flex"
+        className="absolute right-2 top-18 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/10 text-white backdrop-blur transition active:scale-90 hover:bg-white/20 md:flex"
       >
         <ChevronRight size={18} strokeWidth={2} />
       </button>
